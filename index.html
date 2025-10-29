@@ -3,222 +3,186 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Deseándola — En construcción</title>
+  <title>Deseando — Wishes</title>
   <style>
     :root{
-      --lila: #cdb4db;         /* lila pastel principal */
-      --lila-2:#e2c9f2;        /* lila claro */
-      --lila-3:#f3e9ff;        /* fondo muy claro */
-      --malva:#b49acb;         /* acento */
-      --gris:#5e5a64;          /* texto */
-      --blanco:#ffffff;
-      --shadow: 0 10px 30px rgba(173, 131, 230, .15);
+      --bg:#ffffff;
+      --fg:#0f172a;          /* slate-900 */
+      --muted:#64748b;       /* slate-500 */
+      --card:#f8fafc;        /* slate-50 */
+      --border:#e2e8f0;      /* slate-200 */
+      --primary:#111827;     /* neutral-900 */
+      --radius:18px;
     }
-
-    /* Reset mínimo y tipografía */
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      color:var(--gris);
-      background: radial-gradient(1200px 800px at 20% 10%, var(--lila-3), var(--blanco)) fixed;
-      overflow-x:hidden;
+      margin:0; background:var(--bg); color:var(--fg);
+      font: 16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;
     }
-
-    /* Fondo sutil animado */
-    .bg{
-      position:fixed; inset:0; pointer-events:none; z-index:-1;
-      background:
-        radial-gradient(600px 400px at 80% 20%, rgba(205,180,219,.35), transparent 60%),
-        radial-gradient(700px 500px at 15% 80%, rgba(226,201,242,.35), transparent 60%);
-      animation:bgShift 18s ease-in-out infinite alternate;
-      filter:saturate(105%);
+    header{
+      position:sticky; top:0; z-index:5; backdrop-filter:saturate(180%) blur(6px);
+      background:rgba(255,255,255,.75); border-bottom:1px solid var(--border);
     }
-    @keyframes bgShift{
-      0%{transform:translate3d(0,0,0)}
-      100%{transform:translate3d(0,-20px,0)}
+    .container{max-width:1100px; margin:0 auto; padding:20px}
+    .title{font-size: clamp(22px, 3vw, 32px); font-weight:700; letter-spacing:-.02em}
+    .sub{color:var(--muted)}
+    .toolbar{
+      display:grid; gap:10px; grid-template-columns: 1fr 180px;
+      margin-top:16px;
     }
-
-    /* Contenedor principal */
-    .wrap{
-      min-height:100%;
-      display:grid;
-      place-items:center;
-      padding:48px 20px;
+    .input, .select{
+      border:1px solid var(--border); border-radius:12px; padding:12px 14px; background:#fff; color:var(--fg);
+      outline:none; transition: box-shadow .2s, border-color .2s;
     }
-
-    /* Tarjeta */
+    .input:focus, .select:focus{border-color:#cbd5e1; box-shadow:0 0 0 4px rgba(59,130,246,.08)}
+    .grid{
+      display:grid; grid-template-columns: repeat( auto-fill, minmax(260px, 1fr) );
+      gap:16px; margin-top:18px;
+    }
     .card{
-      position:relative;
-      width:min(680px, 92vw);
-      padding:40px 28px 28px;
-      border-radius:24px;
-      background:linear-gradient(180deg, var(--blanco), var(--lila-3));
-      box-shadow:var(--shadow);
-      border:1px solid rgba(205,180,219,.35);
-      transition:transform .6s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease;
-      will-change: transform;
+      background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px;
+      display:flex; flex-direction:column; gap:8px; min-height:160px;
+      transition: transform .15s ease, box-shadow .15s ease;
     }
-    .card:hover{
-      transform:translateY(-2px) rotateX(0.5deg);
-      box-shadow:0 16px 40px rgba(173,131,230,.22);
+    .card:hover{transform:translateY(-2px); box-shadow:0 6px 18px rgba(2,6,23,.06)}
+    .card h3{margin:0; font-size:18px}
+    .badge{
+      display:inline-flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);
     }
-
-    /* Cinta “en construcción” */
-    .ribbon{
-      position:absolute; inset-block-start:12px; inset-inline-end:-14px;
-      background: linear-gradient(90deg, var(--lila), var(--lila-2));
-      color:#4a4060; font-weight:600; letter-spacing:.3px;
-      padding:8px 16px;
-      transform:rotate(6deg);
-      border-radius:12px;
-      box-shadow:0 8px 18px rgba(173,131,230,.25);
-      border:1px solid rgba(255,255,255,.7);
+    .badge .dot{
+      width:8px; height:8px; border-radius:999px; background:#94a3b8;
     }
-
-    h1{
-      margin:0 0 10px;
-      font-size:clamp(28px, 6vw, 44px);
-      line-height:1.05;
-      color:#473a5e;
-      text-wrap:balance;
+    .dot.active{background:#16a34a}
+    .dot.completed{background:#0ea5e9}
+    .dot.archived{background:#64748b}
+    .empty, .error, .loading{
+      margin:40px auto; text-align:center; color:var(--muted);
     }
-
-    .brand{
-      display:inline-grid; grid-auto-flow:column; align-items:center; gap:.5ch;
-      padding:.25rem .6rem; border-radius:12px;
-      background: rgba(205,180,219,.18);
-      border:1px solid rgba(205,180,219,.45);
+    .footer{
+      text-align:center; color:var(--muted); border-top:1px solid var(--border); padding:24px; margin-top:24px;
     }
-    .dot{
-      inline-size:.6em; block-size:.6em; border-radius:50%;
-      background: var(--malva);
-      animation: pulse 2s ease-in-out infinite;
-      box-shadow: 0 0 0 0 rgba(180,154,203,.4);
-    }
-    @keyframes pulse{
-      0%{box-shadow:0 0 0 0 rgba(180,154,203,.45)}
-      70%{box-shadow:0 0 0 12px rgba(180,154,203,0)}
-      100%{box-shadow:0 0 0 0 rgba(180,154,203,0)}
-    }
-
-    p.lead{
-      margin:10px 0 16px;
-      font-size:clamp(16px, 3.2vw, 18px);
-      opacity:.9;
-    }
-
-    /* Microid: subrayado animado */
-    .underline{
-      position:relative; display:inline-block;
-    }
-    .underline::after{
-      content:"";
-      position:absolute; left:0; right:100%; bottom:-2px; height:3px;
-      background: linear-gradient(90deg, var(--lila), var(--malva));
-      border-radius:2px;
-      transition:right .9s cubic-bezier(.2,.8,.2,1);
-    }
-    .card:hover .underline::after{ right:0%; }
-
-    /* Botón */
-    .btn{
-      display:inline-flex; align-items:center; gap:.6ch;
-      padding:12px 18px;
-      background: linear-gradient(180deg, var(--lila), var(--malva));
-      color:var(--blanco); font-weight:600; text-decoration:none;
-      border-radius:14px; border:0;
-      box-shadow:0 8px 18px rgba(173,131,230,.25);
-      transition: transform .15s ease, box-shadow .15s ease, letter-spacing .15s ease;
-      will-change: transform;
-    }
-    .btn:hover{ transform: translateY(-1px); box-shadow:0 12px 26px rgba(173,131,230,.32); letter-spacing:.2px; }
-    .btn:active{ transform: translateY(0); box-shadow:0 8px 18px rgba(173,131,230,.25); }
-
-    /* Línea de progreso con puntitos */
-    .loader{
-      display:inline-grid; grid-auto-flow:column; gap:8px; margin-top:12px;
-    }
-    .loader span{
-      width:8px; height:8px; border-radius:50%;
-      background:var(--malva); opacity:.55;
-      animation: blink 1.6s ease-in-out infinite;
-    }
-    .loader span:nth-child(2){animation-delay:.2s}
-    .loader span:nth-child(3){animation-delay:.4s}
-    @keyframes blink{ 50%{ opacity:1; transform:translateY(-2px)} }
-
-    /* Burbujas flotantes decorativas */
-    .float{
-      position:fixed; border-radius:50%; filter:blur(0.2px);
-      background: radial-gradient(circle at 30% 30%, var(--lila-2), var(--lila));
-      opacity:.18; pointer-events:none; z-index:-1;
-      animation: float 14s ease-in-out infinite alternate;
-    }
-    .float.f1{ width:180px; height:180px; left:-60px; top:20%; animation-duration:17s}
-    .float.f2{ width:120px; height:120px; right:10%; top:12%}
-    .float.f3{ width:220px; height:220px; right:-70px; bottom:10%; animation-duration:19s}
-    @keyframes float{
-      to{ transform: translate3d(0,-18px,0) rotate(6deg) scale(1.03); }
-    }
-
-    /* Accesibilidad: respeta usuarios con “reduced motion” */
-    @media (prefers-reduced-motion: reduce){
-      .bg, .dot, .loader span, .float, .card, .underline::after{ animation:none; transition:none }
-    }
-
-    footer{
-      margin-top:18px; font-size:13px; opacity:.75;
-    }
+    .hidden{display:none}
+    .sr{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
   </style>
 </head>
 <body>
-  <div class="bg" aria-hidden="true"></div>
-  <div class="float f1" aria-hidden="true"></div>
-  <div class="float f2" aria-hidden="true"></div>
-  <div class="float f3" aria-hidden="true"></div>
-
-  <main class="wrap">
-    <section class="card" role="alert" aria-live="polite">
-      <div class="ribbon">En construcción</div>
-
-      <h1>
-        Bienvenidos a <span class="underline">Deseándola</span>
-      </h1>
-
-      <p class="lead">
-        Estamos preparando una experiencia linda y simple, en tonos <b>lila pastel</b>, con una navegación suave y detalles cuidados.
-        <span class="brand"><span class="dot" aria-hidden="true"></span> Pronto disponible</span>
-      </p>
-
-      <a class="btn" href="#" onclick="event.preventDefault();">
-        Avisarme cuando esté listo
-        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-          <path d="M13.172 12 8.222 7.05l1.414-1.414L16 12l-6.364 6.364-1.414-1.414z"/>
-        </svg>
-      </a>
-
-      <div class="loader" aria-label="Cargando…">
-        <span></span><span></span><span></span>
+  <header>
+    <div class="container">
+      <div class="title">Deseando <span class="sub">• Wishes públicos</span></div>
+      <div class="toolbar">
+        <input id="q" class="input" type="search" placeholder="Buscar por título o descripción…" />
+        <select id="status" class="select" aria-label="Filtrar por estado">
+          <option value="">Todos los estados</option>
+          <option value="active">Activos</option>
+          <option value="completed">Completados</option>
+          <option value="archived">Archivados</option>
+        </select>
       </div>
+    </div>
+  </header>
 
-      <footer>
-        © <span id="y"></span> Deseándola · Todos los derechos reservados
-      </footer>
-    </section>
+  <main class="container">
+    <div id="loading" class="loading">Cargando…</div>
+    <div id="error" class="error hidden">No se pudo cargar. Reintenta más tarde.</div>
+    <div id="list" class="grid hidden" aria-live="polite"></div>
+    <div id="empty" class="empty hidden">No hay resultados.</div>
   </main>
 
+  <footer class="footer">
+    <small>Directus → Front demo • Actualiza el repo y se despliega desde EasyPanel</small>
+  </footer>
+
   <script>
-    // Año automático y micro-interacción de foco en teclado
-    document.getElementById('y').textContent = new Date().getFullYear();
-    document.addEventListener('keyup', e=>{
-      if(e.key === 'Enter' || e.key === ' '){
-        const b = document.querySelector('.btn');
-        if(document.activeElement === b){ b.click(); }
+    // ====== CONFIG ======
+    const DIRECTUS_URL = "https://hoztlat-regalos.6vlrrp.easypanel.host";
+    const FRONT_TOKEN  = "4qS2cjqpcf3n61MRwcwfaNceIdKQ_lb-"; // ← pega tu token del rol 'frontend' (solo lectura)
+
+    // ====== HELPERS ======
+    const $ = (id) => document.getElementById(id);
+    const elList   = $("list");
+    const elLoading= $("loading");
+    const elError  = $("error");
+    const elEmpty  = $("empty");
+    const elQ      = $("q");
+    const elStatus = $("status");
+
+    function cardTemplate(w){
+      const d = (w.description || "").trim();
+      const s = (w.status || "active").toLowerCase();
+      return `
+        <article class="card">
+          <h3>${escapeHtml(w.title || "Sin título")}</h3>
+          <div class="badge"><span class="dot ${s}"></span> <span>${s}</span></div>
+          ${d ? `<p>${escapeHtml(d)}</p>` : `<p class="sub">Sin descripción</p>`}
+        </article>
+      `;
+    }
+
+    function escapeHtml(str){
+      return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+    }
+
+    // ====== FETCH ======
+    async function fetchWishes({ q="", status="" } = {}){
+      const params = new URLSearchParams();
+      // Always request only public
+      params.set("filter[visibility][_eq]", "public");
+      params.set("fields", "title,description,status");
+      params.set("sort", "-date,-id"); // sort if you later add `date`
+      params.set("limit", "100");
+
+      if (status) params.set("filter[status][_eq]", status);
+      if (q) {
+        // search in title OR description
+        params.set("search", q);
       }
-    });
+
+      const res = await fetch(`${DIRECTUS_URL}/items/wishes?${params.toString()}`, {
+        headers: FRONT_TOKEN ? { Authorization: `Bearer ${FRONT_TOKEN}` } : {}
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      return Array.isArray(json.data) ? json.data : [];
+    }
+
+    async function load(){
+      try{
+        elError.classList.add("hidden");
+        elEmpty.classList.add("hidden");
+        elList.classList.add("hidden");
+        elLoading.classList.remove("hidden");
+
+        const data = await fetchWishes({ q: elQ.value.trim(), status: elStatus.value });
+        elLoading.classList.add("hidden");
+
+        if (!data.length){
+          elEmpty.classList.remove("hidden");
+          elList.innerHTML = "";
+          elList.classList.add("hidden");
+          return;
+        }
+
+        elList.innerHTML = data.map(cardTemplate).join("");
+        elList.classList.remove("hidden");
+      }catch(err){
+        console.error(err);
+        elLoading.classList.add("hidden");
+        elError.classList.remove("hidden");
+      }
+    }
+
+    // ====== EVENTS ======
+    elQ.addEventListener("input", debounce(load, 250));
+    elStatus.addEventListener("change", load);
+
+    function debounce(fn, ms){
+      let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
+    }
+
+    // First load
+    load();
   </script>
 </body>
 </html>
-<!-- prueba VS Code 2-->
