@@ -6,64 +6,28 @@
   <title>Deseando — Wishes</title>
   <style>
     :root{
-      --bg:#ffffff;
-      --fg:#0f172a;          /* slate-900 */
-      --muted:#64748b;       /* slate-500 */
-      --card:#f8fafc;        /* slate-50 */
-      --border:#e2e8f0;      /* slate-200 */
-      --primary:#111827;     /* neutral-900 */
+      --bg:#fff; --fg:#0f172a; --muted:#64748b; --card:#f8fafc; --border:#e2e8f0;
       --radius:18px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; background:var(--bg); color:var(--fg);
-      font: 16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;
-    }
-    header{
-      position:sticky; top:0; z-index:5; backdrop-filter:saturate(180%) blur(6px);
-      background:rgba(255,255,255,.75); border-bottom:1px solid var(--border);
-    }
-    .container{max-width:1100px; margin:0 auto; padding:20px}
-    .title{font-size: clamp(22px, 3vw, 32px); font-weight:700; letter-spacing:-.02em}
-    .sub{color:var(--muted)}
-    .toolbar{
-      display:grid; gap:10px; grid-template-columns: 1fr 180px;
-      margin-top:16px;
-    }
-    .input, .select{
-      border:1px solid var(--border); border-radius:12px; padding:12px 14px; background:#fff; color:var(--fg);
-      outline:none; transition: box-shadow .2s, border-color .2s;
-    }
-    .input:focus, .select:focus{border-color:#cbd5e1; box-shadow:0 0 0 4px rgba(59,130,246,.08)}
-    .grid{
-      display:grid; grid-template-columns: repeat( auto-fill, minmax(260px, 1fr) );
-      gap:16px; margin-top:18px;
-    }
-    .card{
-      background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px;
-      display:flex; flex-direction:column; gap:8px; min-height:160px;
-      transition: transform .15s ease, box-shadow .15s ease;
-    }
-    .card:hover{transform:translateY(-2px); box-shadow:0 6px 18px rgba(2,6,23,.06)}
-    .card h3{margin:0; font-size:18px}
-    .badge{
-      display:inline-flex; align-items:center; gap:8px; font-size:12px; color:var(--muted);
-    }
-    .badge .dot{
-      width:8px; height:8px; border-radius:999px; background:#94a3b8;
-    }
-    .dot.active{background:#16a34a}
-    .dot.completed{background:#0ea5e9}
-    .dot.archived{background:#64748b}
-    .empty, .error, .loading{
-      margin:40px auto; text-align:center; color:var(--muted);
-    }
-    .footer{
-      text-align:center; color:var(--muted); border-top:1px solid var(--border); padding:24px; margin-top:24px;
-    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    header{position:sticky;top:0;background:rgba(255,255,255,.8);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
+    .container{max-width:1100px;margin:0 auto;padding:20px}
+    .title{font-size:clamp(22px,3vw,32px);font-weight:800;letter-spacing:-.02em}
+    .sub{color:var(--muted);font-weight:600}
+    .toolbar{display:grid;grid-template-columns:1fr 180px;gap:10px;margin-top:14px}
+    .input,.select{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:#fff;outline:0}
+    .input:focus,.select:focus{box-shadow:0 0 0 4px rgba(59,130,246,.08);border-color:#cbd5e1}
+    main .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:18px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;min-height:160px;display:flex;flex-direction:column;gap:8px;transition:.15s ease transform,.15s ease box-shadow}
+    .card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(2,6,23,.06)}
+    .card h3{margin:0;font-size:18px}
+    .badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:#94a3b8}
+    .dot.active{background:#16a34a}.dot.completed{background:#0ea5e9}.dot.archived{background:#64748b}
+    .center{margin:40px auto;text-align:center;color:var(--muted)}
+    footer{border-top:1px solid var(--border);padding:24px;color:var(--muted);text-align:center;margin-top:24px}
     .hidden{display:none}
-    .sr{position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0}
   </style>
 </head>
 <body>
@@ -83,106 +47,93 @@
   </header>
 
   <main class="container">
-    <div id="loading" class="loading">Cargando…</div>
-    <div id="error" class="error hidden">No se pudo cargar. Reintenta más tarde.</div>
+    <div id="loading" class="center">Cargando…</div>
+    <div id="error" class="center hidden">No se pudo cargar. Reintenta más tarde.</div>
+    <div id="empty" class="center hidden">No hay resultados.</div>
     <div id="list" class="grid hidden" aria-live="polite"></div>
-    <div id="empty" class="empty hidden">No hay resultados.</div>
   </main>
 
-  <footer class="footer">
-    <small>Directus → Front demo • Actualiza el repo y se despliega desde EasyPanel</small>
-  </footer>
+  <footer><small>Directus → Front demo — despliegue via EasyPanel</small></footer>
 
   <script>
     // ====== CONFIG ======
     const DIRECTUS_URL = "https://hoztlat-regalos.6vlrrp.easypanel.host";
-    const FRONT_TOKEN  = ""; // sin token (usamos rol Public)
+    // ⚠️ Solo para prueba. Cambia por token de rol FRONTEND (solo lectura) después.
+    const FRONT_TOKEN  = "Wgzv1jeqXBKlqw5CtRPdr0ju7izPiA7g";
 
-
-    // ====== HELPERS ======
+    // ====== UI refs ======
     const $ = (id) => document.getElementById(id);
     const elList   = $("list");
-    const elLoading= $("loading");
-    const elError  = $("error");
+    const elLoad   = $("loading");
+    const elErr    = $("error");
     const elEmpty  = $("empty");
     const elQ      = $("q");
     const elStatus = $("status");
 
-    function cardTemplate(w){
-      const d = (w.description || "").trim();
-      const s = (w.status || "active").toLowerCase();
-      return `
-        <article class="card">
-          <h3>${escapeHtml(w.title || "Sin título")}</h3>
-          <div class="badge"><span class="dot ${s}"></span> <span>${s}</span></div>
-          ${d ? `<p>${escapeHtml(d)}</p>` : `<p class="sub">Sin descripción</p>`}
-        </article>
-      `;
-    }
-
-    function escapeHtml(str){
-      return str.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-    }
-
-    // ====== FETCH ======
-    async function fetchWishes({ q="", status="" } = {}){
+    // ====== Fetch ======
+    async function fetchWishes({ q="", status="" } = {}) {
       const params = new URLSearchParams();
-      // Always request only public
-      params.set("filter[visibility][_eq]", "public");
       params.set("fields", "title,description,status");
-      params.set("sort", "-date,-id"); // sort if you later add `date`
+      params.set("filter[visibility][_eq]", "public");
+      if (status) params.set("filter[status][_eq]", status);
+      if (q) params.set("search", q);
       params.set("limit", "100");
 
-      if (status) params.set("filter[status][_eq]", status);
-      if (q) {
-        // search in title OR description
-        params.set("search", q);
-      }
-
       const res = await fetch(`${DIRECTUS_URL}/items/wishes?${params.toString()}`, {
-        headers: FRONT_TOKEN ? { Authorization: `Bearer ${FRONT_TOKEN}` } : {}
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${FRONT_TOKEN}`,
+          "Content-Type": "application/json"
+        }
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const txt = await res.text().catch(()=> "");
+        throw new Error(`HTTP ${res.status} ${txt}`);
+      }
       const json = await res.json();
       return Array.isArray(json.data) ? json.data : [];
     }
 
+    // ====== Render ======
+    function escapeHtml(str){return (str||"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]))}
+    function card(w){
+      const s = (w.status||"active").toLowerCase();
+      const d = (w.description||"").trim();
+      return `
+        <article class="card">
+          <h3>${escapeHtml(w.title||"Sin título")}</h3>
+          <div class="badge"><span class="dot ${s}"></span><span>${s}</span></div>
+          ${d ? `<p>${escapeHtml(d)}</p>` : `<p class="muted">Sin descripción</p>`}
+        </article>
+      `;
+    }
+
     async function load(){
       try{
-        elError.classList.add("hidden");
-        elEmpty.classList.add("hidden");
-        elList.classList.add("hidden");
-        elLoading.classList.remove("hidden");
+        elErr.classList.add("hidden"); elEmpty.classList.add("hidden");
+        elList.classList.add("hidden"); elLoad.classList.remove("hidden");
 
         const data = await fetchWishes({ q: elQ.value.trim(), status: elStatus.value });
-        elLoading.classList.add("hidden");
 
-        if (!data.length){
-          elEmpty.classList.remove("hidden");
-          elList.innerHTML = "";
-          elList.classList.add("hidden");
-          return;
-        }
+        elLoad.classList.add("hidden");
+        if (!data.length){ elEmpty.classList.remove("hidden"); elList.innerHTML=""; return; }
 
-        elList.innerHTML = data.map(cardTemplate).join("");
+        elList.innerHTML = data.map(card).join("");
         elList.classList.remove("hidden");
-      }catch(err){
-        console.error(err);
-        elLoading.classList.add("hidden");
-        elError.classList.remove("hidden");
+      }catch(e){
+        console.error(e);
+        elLoad.classList.add("hidden");
+        elErr.classList.remove("hidden");
       }
     }
 
-    // ====== EVENTS ======
+    // ====== Events ======
     elQ.addEventListener("input", debounce(load, 250));
     elStatus.addEventListener("change", load);
+    function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
 
-    function debounce(fn, ms){
-      let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); };
-    }
-
-    // First load
+    // Init
     load();
   </script>
 </body>
