@@ -1,0 +1,23 @@
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Builds y dependencias
+dist/
+build/
+node_modules/
+.out/
+coverage/
+.parcel-cache/
+.next/
+out/
+
+# Variables de entorno (secretos)
+.env
+*.env
