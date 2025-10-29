@@ -3,138 +3,305 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Deseando — Wishes</title>
+  <title>Deseando • Demo</title>
   <style>
     :root{
-      --bg:#fff; --fg:#0f172a; --muted:#64748b; --card:#f8fafc; --border:#e2e8f0; --radius:18px;
+      --bg:#ffffff; --txt:#1f2937; --muted:#6b7280; --line:#e5e7eb;
+      --brand:#111827; --pill:#f3f4f6; --pill-txt:#374151; --hover:#f9fafb;
     }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    header{position:sticky;top:0;background:rgba(255,255,255,.85);backdrop-filter:blur(6px);border-bottom:1px solid var(--border)}
-    .container{max-width:1100px;margin:0 auto;padding:20px}
-    .title{font-size:clamp(22px,3vw,32px);font-weight:800;letter-spacing:-.02em}
-    .sub{color:var(--muted);font-weight:600}
-    .toolbar{display:grid;grid-template-columns:1fr 180px;gap:10px;margin-top:14px}
-    .input,.select{border:1px solid var(--border);border-radius:12px;padding:12px 14px;background:#fff;outline:0}
-    .input:focus,.select:focus{box-shadow:0 0 0 4px rgba(59,130,246,.08);border-color:#cbd5e1}
-    main .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-top:18px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;min-height:160px;display:flex;flex-direction:column;gap:8px;transition:.15s ease transform,.15s ease box-shadow}
-    .card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(2,6,23,.06)}
-    .card h3{margin:0;font-size:18px}
-    .badge{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
-    .dot{width:8px;height:8px;border-radius:999px;background:#94a3b8}
-    .dot.active{background:#16a34a}.dot.completed{background:#0ea5e9}.dot.archived{background:#64748b}
-    .center{margin:40px auto;text-align:center;color:var(--muted)}
-    footer{border-top:1px solid var(--border);padding:24px;color:var(--muted);text-align:center;margin-top:24px}
-    .hidden{display:none}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--txt); font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:28px 20px 64px}
+    header{display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:18px}
+    .logo{font-weight:800; font-size:28px; letter-spacing:.2px}
+    .dot{color:#9ca3af}
+    .sub{color:var(--muted); font-weight:500}
+    .toolbar{
+      display:grid; grid-template-columns:1fr 220px 120px; gap:10px; margin:16px 0 8px;
+    }
+    input[type="search"], select{
+      padding:12px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; color:var(--txt);
+      outline:0; transition:border-color .15s ease, box-shadow .15s ease;
+    }
+    input[type="search"]:focus, select:focus{border-color:#cbd5e1; box-shadow:0 0 0 3px #e5e7eb}
+    button{
+      border:1px solid var(--line); background:#fff; padding:10px 12px; border-radius:10px; color:var(--txt); cursor:pointer;
+    }
+    button:hover{background:var(--hover)}
+    .grid{display:grid; grid-template-columns:repeat(12,1fr); gap:14px; margin-top:10px}
+    .card{
+      grid-column:span 12; border:1px solid var(--line); border-radius:16px; padding:16px; background:#fff;
+      transition:box-shadow .15s ease, transform .05s ease;
+    }
+    .card:hover{box-shadow:0 3px 14px rgba(0,0,0,.05)}
+    .row{display:flex; gap:14px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap}
+    .title{font-weight:700; font-size:18px}
+    .meta{display:flex; gap:8px; align-items:center; flex-wrap:wrap; color:var(--muted); font-size:14px}
+    .pill{background:var(--pill); color:var(--pill-txt); padding:4px 10px; border-radius:999px; font-size:12px; border:1px solid var(--line)}
+    .desc{color:var(--muted); margin-top:6px}
+    .actions{display:flex; gap:8px; align-items:center}
+    .Link{color:#111827; text-decoration:none; border:1px solid var(--line); padding:8px 10px; border-radius:10px}
+    .Link:hover{background:var(--hover)}
+    .empty{color:var(--muted); text-align:center; padding:40px 10px; border:1px dashed var(--line); border-radius:12px}
+    details{margin-top:12px; background:#fafafa; border:1px solid var(--line); border-radius:12px; overflow:hidden}
+    summary{cursor:pointer; padding:12px 14px; font-weight:600; list-style:none}
+    summary::-webkit-details-marker{display:none}
+    .panel{padding:14px; border-top:1px solid var(--line); background:#fff}
+    .list{display:flex; flex-direction:column; gap:8px}
+    .item{display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff}
+    .muted{color:var(--muted)}
+    footer{margin-top:26px; color:var(--muted); font-size:14px}
+    @media(min-width:700px){
+      .card{grid-column:span 6}
+    }
+    @media(min-width:980px){
+      .card{grid-column:span 4}
+    }
   </style>
 </head>
 <body>
-  <header>
-    <div class="container">
-      <div class="title">Deseando <span class="sub">• Wishes públicos</span></div>
-      <div class="toolbar">
-        <input id="q" class="input" type="search" placeholder="Buscar por título o descripción…" />
-        <select id="status" class="select" aria-label="Filtrar por estado">
-          <option value="">Todos los estados</option>
-          <option value="active">Activos</option>
-          <option value="completed">Completados</option>
-          <option value="archived">Archivados</option>
-        </select>
-      </div>
+  <div class="wrap">
+    <header>
+      <div class="logo">Deseando <span class="dot">•</span></div>
+      <div class="sub">Wishes públicos (demo Directus)</div>
+    </header>
+
+    <div class="toolbar">
+      <input id="q" type="search" placeholder="Buscar por título o descripción…" autocomplete="off" />
+      <select id="status">
+        <option value="">Todos los estados</option>
+        <option value="active">Activos</option>
+        <option value="completed">Completados</option>
+        <option value="archived">Archivados</option>
+      </select>
+      <button id="refresh">Actualizar</button>
     </div>
-  </header>
 
-  <main class="container">
-    <div id="loading" class="center">Cargando…</div>
-    <div id="error" class="center hidden">No se pudo cargar. Reintenta más tarde.</div>
-    <div id="empty" class="center hidden">No hay resultados.</div>
-    <div id="list" class="grid hidden" aria-live="polite"></div>
-  </main>
+    <div id="grid" class="grid"></div>
 
-  <footer><small>Directus → Front demo — EasyPanel v1.1.3</small></footer>
+    <footer>
+      Directus → Front demo • Edita <code>DIREC</code>/<code>TOKEN</code> en la cabecera del archivo. V1.1.4
+    </footer>
+  </div>
 
   <script>
-    // ====== CONFIG ======
+    /***********************
+     * CONFIGURACIÓN
+     ***********************/
     const DIRECTUS_URL = "https://hoztlat-regalos.6vlrrp.easypanel.host";
-    // Token del rol FRONTEND (solo lectura):
-    const FRONT_TOKEN  = "O5J6XlDo4TLzaNM4u1LUeJpwmzIoELiB";
+    // Deja vacío "" para usar rol Public, o usa tu token (admin/frontend)
+    const TOKEN = "O5J6XLDo4TLzaNM4u1LUeJpwmzIoELiB";
 
-    // ====== UI refs ======
-    const $ = (id) => document.getElementById(id);
-    const elList   = $("list");
-    const elLoad   = $("loading");
-    const elErr    = $("error");
-    const elEmpty  = $("empty");
-    const elQ      = $("q");
-    const elStatus = $("status");
+    /***********************
+     * HELPERS FETCH
+     ***********************/
+    function authHeaders() {
+      const h = { "Accept": "application/json" };
+      if (TOKEN && TOKEN.trim()) h["Authorization"] = "Bearer " + TOKEN.trim();
+      return h;
+    }
 
-    // ====== Fetch (sin cache, headers mínimos) ======
-    async function fetchWishes({ q = "", status = "" } = {}) {
-      const params = new URLSearchParams();
-      params.set("fields", "title,description,status,visibility,id");
-      params.set("filter[visibility][_eq]", "public");
-      if (status) params.set("filter[status][_eq]", status);
-      if (q) params.set("search", q);
-      params.set("sort", "-id");
-      params.set("limit", "100");
-      params.set("_", Date.now()); // cache-busting
-
-      const res = await fetch(`${DIRECTUS_URL}/items/wishes?${params.toString()}`, {
-        method: "GET",
-        mode: "cors",
-        cache: "no-store",
-        headers: { Authorization: `Bearer ${FRONT_TOKEN}` }
+    async function api(path, params = {}) {
+      const url = new URL(DIRECTUS_URL.replace(/\/$/, "") + path);
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, v);
       });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`HTTP ${res.status} – ${txt}`);
-      }
-      const json = await res.json();
-      return Array.isArray(json.data) ? json.data : [];
+      const r = await fetch(url.toString(), { headers: authHeaders() });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
     }
 
-    // ====== Render ======
-    function escapeHtml(str){return (str||"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]))}
-    function card(w){
-      const s = (w.status||"active").toLowerCase();
-      const d = (w.description||"").trim();
-      return `
-        <article class="card">
-          <h3>${escapeHtml(w.title||"Sin título")}</h3>
-          <div class="badge"><span class="dot ${s}"></span><span>${s}</span></div>
-          ${d ? `<p>${escapeHtml(d)}</p>` : `<p class="muted">Sin descripción</p>`}
-        </article>
+    const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
+    const fmt = new Intl.NumberFormat("es-AR",{style:"currency", currency:"ARS"});
+
+    /***********************
+     * UI RENDER
+     ***********************/
+    const grid = document.querySelector("#grid");
+    const $q = document.querySelector("#q");
+    const $status = document.querySelector("#status");
+    const $refresh = document.querySelector("#refresh");
+
+    let lastQuery = "";
+
+    function cardSkeleton() {
+      return `<div class="card">
+        <div class="row"><div class="title" style="opacity:.5">Cargando…</div></div>
+        <div class="desc muted">…</div>
+      </div>`;
+    }
+
+    function renderEmpty(msg="No se encontraron resultados.") {
+      grid.innerHTML = `<div class="card" style="grid-column:span 12"><div class="empty">${msg}</div></div>`;
+    }
+
+    function wishCardTpl(w) {
+      const pills = `
+        <span class="pill">${w.visibility}</span>
+        <span class="pill">${w.status}</span>
+        ${typeof w.goal_amount === "number" ? `<span class="pill">Meta: ${w.goal_amount}</span>` : ""}
       `;
+      return `
+      <div class="card" data-id="${w.id}">
+        <div class="row">
+          <div>
+            <div class="title">${escapeHTML(w.title || "Sin título")}</div>
+            <div class="meta">${pills}</div>
+            ${w.description ? `<div class="desc">${escapeHTML(w.description)}</div>` : ""}
+          </div>
+          <div class="actions">
+            <a class="Link" href="javascript:void(0)" data-action="toggle" aria-label="ver detalles">Ver detalles</a>
+          </div>
+        </div>
+
+        <details>
+          <summary>Detalles</summary>
+          <div class="panel">
+            <div class="muted" style="margin-bottom:8px">Eventos</div>
+            <div class="list" data-slot="events"><div class="muted">Cargando…</div></div>
+            <div style="height:14px"></div>
+            <div class="muted" style="margin-bottom:8px">Regalos (gifts)</div>
+            <div class="list" data-slot="gifts"><div class="muted">Cargando…</div></div>
+          </div>
+        </details>
+      </div>`;
     }
 
-    async function load(){
+    function giftItemTpl(g) {
+      return `
+      <div class="item">
+        <div>
+          <div><strong>${escapeHTML(g.title)}</strong></div>
+          ${g.description ? `<div class="muted">${escapeHTML(g.description)}</div>` : ""}
+        </div>
+        <div class="muted">${g.price!=null? fmt.format(g.price):""} &nbsp; <span class="pill">${g.status}</span></div>
+      </div>`;
+    }
+
+    function eventItemTpl(e) {
+      const when = e.date ? new Date(e.date).toLocaleString() : "Sin fecha";
+      return `
+      <div class="item">
+        <div>
+          <div><strong>${escapeHTML(e.title)}</strong></div>
+          <div class="muted">${when}${e.location?` • ${escapeHTML(e.location)}`:""}</div>
+        </div>
+      </div>`;
+    }
+
+    function escapeHTML(s){
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    /***********************
+     * LOADERS
+     ***********************/
+    async function loadWishes() {
+      grid.innerHTML = cardSkeleton() + cardSkeleton() + cardSkeleton();
+
+      // Base fields; si usas rol Public, el backend debe permitir leer estos campos
+      const fields = [
+        "id","title","description","status","visibility",
+        "goal_amount","collected_amount"
+      ].join(",");
+
+      // Filtros
+      const params = {
+        fields,
+        sort: "-id",
+        limit: "30",
+        "filter[visibility][_eq]": "public"
+      };
+
+      // Búsqueda en título/description
+      const q = $q.value.trim();
+      lastQuery = q;
+      if (q) {
+        // Directus filter OR: _or[][title][_contains]=q
+        params["_or[0][title][_icontains]"] = q;
+        params["_or[1][description][_icontains]"] = q;
+      }
+
+      // Filtro status
+      const st = $status.value;
+      if (st) params["filter[status][_eq]"] = st;
+
       try{
-        elErr.classList.add("hidden"); elEmpty.classList.add("hidden");
-        elList.classList.add("hidden"); elLoad.classList.remove("hidden");
+        const data = await api("/items/wishes", params);
+        if (!data?.data?.length) return renderEmpty("No hay wishes que coincidan con tu búsqueda.");
+        grid.innerHTML = data.data.map(wishCardTpl).join("");
 
-        const data = await fetchWishes({ q: elQ.value.trim(), status: elStatus.value });
-
-        elLoad.classList.add("hidden");
-        if (!data.length){ elEmpty.classList.remove("hidden"); elList.innerHTML=""; return; }
-
-        elList.innerHTML = data.map(card).join("");
-        elList.classList.remove("hidden");
-      }catch(e){
-        console.error(e);
-        elLoad.classList.add("hidden");
-        elErr.classList.remove("hidden");
+        // Wire detalles
+        for (const card of grid.querySelectorAll(".card")) {
+          const id = card.getAttribute("data-id");
+          const btn = card.querySelector('[data-action="toggle"]');
+          const det = card.querySelector("details");
+          btn?.addEventListener("click", () => det.toggleAttribute("open"));
+          det?.addEventListener("toggle", async () => {
+            if (det.open && !card.dataset.loaded) {
+              await loadEvents(id, card.querySelector('[data-slot="events"]'));
+              await loadGifts(id, card.querySelector('[data-slot="gifts"]'));
+              card.dataset.loaded = "1";
+            }
+          });
+        }
+      }catch(err){
+        console.error(err);
+        renderEmpty("No se pudo cargar. Reintenta más tarde.");
       }
     }
 
-    // ====== Events ======
-    elQ.addEventListener("input", debounce(load, 250));
-    elStatus.addEventListener("change", load);
-    function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms)}}
+    async function loadEvents(wishId, slot){
+      try{
+        const data = await api("/items/events", {
+          "fields": "id,title,date,location",
+          "filter[wish][_eq]": wishId,
+          "sort": "-date",
+          "limit": "20"
+        });
+        const items = data?.data || [];
+        slot.innerHTML = items.length
+          ? items.map(eventItemTpl).join("")
+          : '<div class="muted">Sin eventos</div>';
+      }catch(e){
+        slot.innerHTML = '<div class="muted">Error cargando eventos</div>';
+      }
+    }
+
+    async function loadGifts(wishId, slot){
+      try{
+        const data = await api("/items/gifts", {
+          "fields": "id,title,description,price,status",
+          "filter[wish][_eq]": wishId,
+          "sort": "-id",
+          "limit": "20"
+        });
+        const items = data?.data || [];
+        slot.innerHTML = items.length
+          ? items.map(giftItemTpl).join("")
+          : '<div class="muted">Sin regalos</div>';
+      }catch(e){
+        slot.innerHTML = '<div class="muted">Error cargando regalos</div>';
+      }
+    }
+
+    /***********************
+     * EVENTS UI
+     ***********************/
+    function debounce(fn, ms=350){
+      let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); };
+    }
+    $q.addEventListener("input", debounce(() => {
+      loadWishes();
+    }, 350));
+    $status.addEventListener("change", loadWishes);
+    $refresh.addEventListener("click", loadWishes);
 
     // Init
-    load();
+    loadWishes();
   </script>
 </body>
 </html>

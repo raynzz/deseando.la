@@ -1,0 +1,79 @@
+$SCHEMA_DELTA = @'
+{
+  "collections": [
+    { "collection": "wish_collaborators", "schema": { "name": "wish_collaborators" }, "meta": { "icon": "users" } },
+    { "collection": "events",             "schema": { "name": "events" },             "meta": { "icon": "calendar" } },
+    { "collection": "gifts",              "schema": { "name": "gifts" },              "meta": { "icon": "gift" } }
+  ],
+  "fields": [
+    { "collection": "wish_collaborators", "field": "id",   "type": "integer",
+      "schema": { "is_primary_key": true, "has_auto_increment": true } },
+    { "collection": "wish_collaborators", "field": "wish", "type": "integer",
+      "meta":   { "interface": "select-dropdown-m2o" },
+      "schema": { "foreign_key_table": "wishes", "foreign_key_column": "id" } },
+    { "collection": "wish_collaborators", "field": "user", "type": "uuid",
+      "meta":   { "interface": "select-dropdown-m2o", "display": "user" },
+      "schema": { "foreign_key_table": "directus_users", "foreign_key_column": "id" } },
+    { "collection": "wish_collaborators", "field": "role", "type": "string",
+      "meta":   { "interface": "select-dropdown",
+                  "options": { "choices": [
+                    { "text": "creator", "value": "creator" },
+                    { "text": "editor",  "value": "editor"  },
+                    { "text": "viewer",  "value": "viewer"  }
+                  ] } } },
+
+    { "collection": "events", "field": "id",   "type": "integer",
+      "schema": { "is_primary_key": true, "has_auto_increment": true } },
+    { "collection": "events", "field": "wish", "type": "integer",
+      "meta":   { "interface": "select-dropdown-m2o" },
+      "schema": { "foreign_key_table": "wishes", "foreign_key_column": "id" } },
+    { "collection": "events", "field": "title", "type": "string",
+      "meta": { "interface": "input", "required": true } },
+    { "collection": "events", "field": "description", "type": "text",
+      "meta": { "interface": "input-multiline" } },
+    { "collection": "events", "field": "date", "type": "datetime",
+      "meta": { "interface": "datetime" } },
+    { "collection": "events", "field": "location", "type": "string",
+      "meta": { "interface": "input" } },
+
+    { "collection": "gifts", "field": "id",   "type": "integer",
+      "schema": { "is_primary_key": true, "has_auto_increment": true } },
+    { "collection": "gifts", "field": "wish", "type": "integer",
+      "meta":   { "interface": "select-dropdown-m2o" },
+      "schema": { "foreign_key_table": "wishes", "foreign_key_column": "id" } },
+    { "collection": "gifts", "field": "title", "type": "string",
+      "meta": { "interface": "input", "required": true } },
+    { "collection": "gifts", "field": "description", "type": "text",
+      "meta": { "interface": "input-multiline" } },
+    { "collection": "gifts", "field": "price", "type": "decimal",
+      "meta": { "interface": "input", "note": "Precio (12,2)" } },
+    { "collection": "gifts", "field": "status", "type": "string",
+      "schema": { "default_value": "available" },
+      "meta": { "interface": "select-dropdown",
+                "options": { "choices": [
+                  { "text": "available", "value": "available" },
+                  { "text": "reserved",  "value": "reserved"  },
+                  { "text": "completed", "value": "completed" }
+                ] } } },
+    { "collection": "gifts", "field": "image", "type": "uuid",
+      "meta": { "interface": "file" },
+      "schema": { "is_nullable": true, "foreign_key_table": "directus_files", "foreign_key_column": "id" } }
+  ],
+  "relations": [
+    { "collection": "wish_collaborators", "field": "wish", "related_collection": "wishes",
+      "meta": { "many_collection": "wish_collaborators", "many_field": "wish",
+               "one_collection": "wishes", "one_field": null } },
+    { "collection": "wish_collaborators", "field": "user", "related_collection": "directus_users",
+      "meta": { "many_collection": "wish_collaborators", "many_field": "user",
+               "one_collection": "directus_users", "one_field": null } },
+    { "collection": "events", "field": "wish", "related_collection": "wishes",
+      "meta": { "many_collection": "events", "many_field": "wish",
+               "one_collection": "wishes", "one_field": null } },
+    { "collection": "gifts", "field": "wish", "related_collection": "wishes",
+      "meta": { "many_collection": "gifts", "many_field": "wish",
+               "one_collection": "wishes", "one_field": null } }
+  ]
+}
+'@
+
+$SCHEMA_DELTA | Set-Content -Encoding utf8 -NoNewline .\schema-delta.json
