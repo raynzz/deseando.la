@@ -72,28 +72,28 @@
 
     // ====== Fetch ======
     async function fetchWishes({ q="", status="" } = {}) {
-      const params = new URLSearchParams();
-      params.set("fields", "title,description,status");
-      params.set("filter[visibility][_eq]", "public");
-      if (status) params.set("filter[status][_eq]", status);
-      if (q) params.set("search", q);
-      params.set("limit", "100");
+    const params = new URLSearchParams();
+    params.set("fields", "title,description,status,visibility,id");
+    params.set("filter[visibility][_eq]", "public");
+    if (status) params.set("filter[status][_eq]", status);
+    if (q) params.set("search", q);
+    params.set("sort", "-id");        // más nuevos primero
+    params.set("limit", "100");
+    params.set("_", Date.now());      // cache-busting
 
-      const res = await fetch(`${DIRECTUS_URL}/items/wishes?${params.toString()}`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${FRONT_TOKEN}`,
-          "Content-Type": "application/json"
-        }
-      });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(()=> "");
-        throw new Error(`HTTP ${res.status} ${txt}`);
+    const res = await fetch(`${DIRECTUS_URL}/items/wishes?${params.toString()}`, {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${FRONT_TOKEN}`,
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache"
       }
-      const json = await res.json();
-      return Array.isArray(json.data) ? json.data : [];
-    }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    return Array.isArray(json.data) ? json.data : [];
+  }
 
     // ====== Render ======
     function escapeHtml(str){return (str||"").replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;' }[m]))}
