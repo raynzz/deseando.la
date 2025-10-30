@@ -13,7 +13,6 @@ export default {
         line: '#e5e7eb',
         brand: '#111827',
         pill: '#f3f4f6',
-        pillText: '#374151',
         hover: '#f9fafb',
       },
       fontFamily: {

@@ -9,7 +9,7 @@ const GiftCard = ({ gift }: GiftCardProps) => {
     <div className="bg-white rounded-lg border border-line p-4">
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-semibold text-brand">{gift.title}</h4>
-        <span className="px-2 py-1 bg-pill text-pill-text text-xs rounded-full">
+        <span className="px-2 py-1 bg-pill text-muted text-xs rounded-full border border-line">
           {gift.status}
         </span>
       </div>

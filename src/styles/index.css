@@ -34,7 +34,7 @@ body {
 
 /* Utility classes */
 .pill {
-  @apply bg-pill text-pill-txt px-2.5 py-0.5 rounded-full text-xs border border-line;
+  @apply bg-pill text-muted px-2.5 py-0.5 rounded-full text-xs border border-line;
 }
 
 .hover-bg {

@@ -10,7 +10,7 @@ const WishCard = ({ wish }: WishCardProps) => {
     <div className="bg-white rounded-lg border border-line p-6 hover:shadow-md transition-shadow">
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-lg font-semibold text-brand">{wish.title}</h3>
-        <span className="px-2 py-1 bg-pill text-pill-text text-xs rounded-full">
+        <span className="px-2 py-1 bg-pill text-muted text-xs rounded-full border border-line">
           {wish.status}
         </span>
       </div>
@@ -21,11 +21,11 @@ const WishCard = ({ wish }: WishCardProps) => {
       
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
-          <span className="px-2 py-1 bg-pill text-pill-text text-xs rounded-full">
+          <span className="px-2 py-1 bg-pill text-muted text-xs rounded-full border border-line">
             {wish.visibility}
           </span>
           {typeof wish.goal_amount === 'number' && (
-            <span className="px-2 py-1 bg-pill text-pill-text text-xs rounded-full">
+            <span className="px-2 py-1 bg-pill text-muted text-xs rounded-full border border-line">
               Meta: ${wish.goal_amount}
             </span>
           )}
