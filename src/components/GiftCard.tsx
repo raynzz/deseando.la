@@ -1,8 +1,32 @@
-import type { Gift } from '../features/wishes/types';
+import type { Gift } from '../features/wishes/types'
 
-// Mock component for development
-export const GiftCard = ({ gift }: { gift: Gift }) => {
-  return {
-    render: () => `GiftCard for: ${gift.title}`,
-  };
-};
+interface GiftCardProps {
+  gift: Gift
+}
+
+const GiftCard = ({ gift }: GiftCardProps) => {
+  return (
+    <div className="bg-white rounded-lg border border-line p-4">
+      <div className="flex justify-between items-start mb-2">
+        <h4 className="font-semibold text-brand">{gift.title}</h4>
+        <span className="px-2 py-1 bg-pill text-pill-text text-xs rounded-full">
+          {gift.status}
+        </span>
+      </div>
+      
+      {gift.description && (
+        <p className="text-muted text-sm mb-3">{gift.description}</p>
+      )}
+      
+      {gift.price && (
+        <div className="text-right">
+          <span className="font-semibold text-brand">
+            ${gift.price.toLocaleString('es-AR')}
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default GiftCard
