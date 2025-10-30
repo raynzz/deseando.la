@@ -1,6 +1,7 @@
-// Create a simple query client for now
-// Will be replaced with actual React Query client after dependencies are installed
-export const queryClient = {
+import { QueryClient } from '@tanstack/react-query'
+
+// Create a React Query client
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 3,
@@ -11,8 +12,4 @@ export const queryClient = {
       retry: 3,
     },
   },
-};
-
-// Mock React Query hooks for development
-export const useQuery = () => ({ data: null, isLoading: false, error: null });
-export const useMutation = () => ({ mutate: () => {}, isLoading: false });
+})
