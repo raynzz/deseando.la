@@ -1,4 +1,3 @@
-import Navbar from '../components/Navbar'
 import WishCard from '../components/WishCard'
 import EventCard from '../components/EventCard'
 import GiftCard from '../components/GiftCard'

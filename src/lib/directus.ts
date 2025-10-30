@@ -9,8 +9,8 @@ import type {
 } from '../features/wishes/types';
 
 // Environment variables - Vite usa import.meta.env
-const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || '';
-const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN || '';
+const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'https://hoztlat-regalos.6vlrrp.easypanel.host';
+const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN || '8CzN175Z3ibcoDZQRnD3v86AkZAcoaeh';
 
 console.log('Configuración Directus:', { 
   DIRECTUS_URL, 
@@ -30,7 +30,7 @@ interface ApiItemResponse<T> {
 }
 
 // Helper function to add authentication headers
-const getAuthHeaders = (method: string = 'GET') => {
+const getAuthHeaders = (_method: string = 'GET') => {
   const headers: Record<string, string> = {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -89,7 +89,7 @@ export const api = async <T>(
     
     if (!response.ok) {
       if (response.status === 401 || response.status === 403) {
-        throw new Error('No autorizado. Verifica tu token o permisos.');
+        throw new Error(`No autorizado. Verifica tu token o permisos. Status: ${response.status}`);
       }
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }

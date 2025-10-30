@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { wishApi, getCurrentUser } from '../../lib/directus'
-import { mockWishes, mockEvents, mockGifts } from '../../lib/mockData'
 import type { Wish, Event, Gift, UserInfo } from './types'
 
 // Hook para obtener la información del usuario actual
@@ -32,37 +31,16 @@ export const useWishes = (params: {
   return useQuery<Wish[]>({
     queryKey: ['wishes', params],
     queryFn: async () => {
-      try {
-        console.log('Intentando obtener deseos con params:', params)
-        const response = await wishApi.getWishes(params)
-        console.log('Respuesta de Directus:', response)
-        return response.data || []
-      } catch (error) {
-        console.error('Error fetching wishes, using mock data:', error)
-        // Filtrar datos de prueba según los parámetros
-        let filteredWishes = [...mockWishes]
-        
-        if (params.search) {
-          const searchLower = params.search.toLowerCase()
-          filteredWishes = filteredWishes.filter(wish => 
-            wish.title.toLowerCase().includes(searchLower) ||
-            (wish.description && wish.description.toLowerCase().includes(searchLower))
-          )
-        }
-        
-        if (params.status) {
-          filteredWishes = filteredWishes.filter(wish => wish.status === params.status)
-        }
-        
-        if (params.limit) {
-          filteredWishes = filteredWishes.slice(0, params.limit)
-        }
-        
-        console.log('Usando datos de prueba:', filteredWishes)
-        return filteredWishes
-      }
+      console.log('Intentando obtener deseos con params:', params)
+      const response = await wishApi.getWishes(params)
+      console.log('Respuesta de Directus:', response)
+      return response.data || []
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
+    retry: (failureCount, error) => {
+      console.error(`Error fetching wishes (attempt ${failureCount + 1}):`, error)
+      return failureCount < 2 // Retry up to 2 times
+    },
   })
 }
 
@@ -71,22 +49,17 @@ export const useWish = (id: number) => {
   return useQuery<Wish>({
     queryKey: ['wish', id],
     queryFn: async () => {
-      try {
-        console.log(`Intentando obtener deseo con id: ${id}`)
-        const response = await wishApi.getWish(id)
-        console.log(`Respuesta de Directus para deseo ${id}:`, response)
-        return response.data
-      } catch (error) {
-        console.error(`Error fetching wish ${id}, using mock data:`, error)
-        const wish = mockWishes.find(w => w.id === id)
-        if (!wish) {
-          throw new Error('Wish not found')
-        }
-        return wish
-      }
+      console.log(`Intentando obtener deseo con id: ${id}`)
+      const response = await wishApi.getWish(id)
+      console.log(`Respuesta de Directus para deseo ${id}:`, response)
+      return response.data
     },
     enabled: !!id,
     staleTime: 1000 * 60 * 5, // 5 minutos
+    retry: (failureCount, error) => {
+      console.error(`Error fetching wish ${id} (attempt ${failureCount + 1}):`, error)
+      return failureCount < 2 // Retry up to 2 times
+    },
   })
 }
 
@@ -95,18 +68,17 @@ export const useWishEvents = (wishId: number) => {
   return useQuery<Event[]>({
     queryKey: ['wishEvents', wishId],
     queryFn: async () => {
-      try {
-        console.log(`Intentando obtener eventos para deseo: ${wishId}`)
-        const response = await wishApi.getEvents(wishId)
-        console.log(`Respuesta de Directus para eventos ${wishId}:`, response)
-        return response.data || []
-      } catch (error) {
-        console.error(`Error fetching wish events ${wishId}, using mock data:`, error)
-        return mockEvents.filter(event => event.wish === wishId)
-      }
+      console.log(`Intentando obtener eventos para deseo: ${wishId}`)
+      const response = await wishApi.getEvents(wishId)
+      console.log(`Respuesta de Directus para eventos ${wishId}:`, response)
+      return response.data || []
     },
     enabled: !!wishId,
     staleTime: 1000 * 60 * 5, // 5 minutos
+    retry: (failureCount, error) => {
+      console.error(`Error fetching wish events ${wishId} (attempt ${failureCount + 1}):`, error)
+      return failureCount < 2 // Retry up to 2 times
+    },
   })
 }
 
@@ -115,18 +87,17 @@ export const useWishGifts = (wishId: number) => {
   return useQuery<Gift[]>({
     queryKey: ['wishGifts', wishId],
     queryFn: async () => {
-      try {
-        console.log(`Intentando obtener regalos para deseo: ${wishId}`)
-        const response = await wishApi.getGifts(wishId)
-        console.log(`Respuesta de Directus para regalos ${wishId}:`, response)
-        return response.data || []
-      } catch (error) {
-        console.error(`Error fetching wish gifts ${wishId}, using mock data:`, error)
-        return mockGifts.filter(gift => gift.wish === wishId)
-      }
+      console.log(`Intentando obtener regalos para deseo: ${wishId}`)
+      const response = await wishApi.getGifts(wishId)
+      console.log(`Respuesta de Directus para regalos ${wishId}:`, response)
+      return response.data || []
     },
     enabled: !!wishId,
     staleTime: 1000 * 60 * 5, // 5 minutos
+    retry: (failureCount, error) => {
+      console.error(`Error fetching wish gifts ${wishId} (attempt ${failureCount + 1}):`, error)
+      return failureCount < 2 // Retry up to 2 times
+    },
   })
 }
 
@@ -135,8 +106,8 @@ export const useCreateWish = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async (wishData: Partial<Wish>) => {
-      return await wishApi.createWish(wishData)
+    mutationFn: async (_wishData: Partial<Wish>) => {
+      return await wishApi.createWish(_wishData)
     },
     onSuccess: () => {
       // Invalidar la caché de deseos para refrescar la lista
@@ -150,7 +121,7 @@ export const useUpdateWish = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async ({ id, ...wishData }: Partial<Wish> & { id: number }) => {
+    mutationFn: async ({ id, ..._wishData }: Partial<Wish> & { id: number }) => {
       // Esta función se implementará cuando se agregue el endpoint de actualización
       throw new Error('Update wish not implemented yet')
     },
@@ -180,7 +151,7 @@ export const useCreateEvent = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async (eventData: Partial<Event>) => {
+    mutationFn: async (_eventData: Partial<Event>) => {
       // Esta función se implementará cuando se agregue el endpoint de creación
       throw new Error('Create event not implemented yet')
     },
@@ -195,7 +166,7 @@ export const useCreateGift = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async (giftData: Partial<Gift>) => {
+    mutationFn: async (_giftData: Partial<Gift>) => {
       // Esta función se implementará cuando se agregue el endpoint de creación
       throw new Error('Create gift not implemented yet')
     },
@@ -210,7 +181,7 @@ export const useUpdateGift = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async ({ id, ...giftData }: Partial<Gift> & { id: number }) => {
+    mutationFn: async ({ id, ..._giftData }: Partial<Gift> & { id: number }) => {
       // Esta función se implementará cuando se agregue el endpoint de actualización
       throw new Error('Update gift not implemented yet')
     },
@@ -225,7 +196,7 @@ export const useDeleteGift = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: async (id: number) => {
+    mutationFn: async (_id: number) => {
       // Esta función se implementará cuando se agregue el endpoint de eliminación
       throw new Error('Delete gift not implemented yet')
     },
