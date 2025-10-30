@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles for the minimal theme */
+:root {
+  --bg: #ffffff;
+  --txt: #111827;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --brand: #111827;
+  --pill: #f3f4f6;
+  --pill-txt: #374151;
+  --hover: #f9fafb;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--txt);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial;
+  line-height: 1.5;
+}
+
+/* Utility classes */
+.pill {
+  @apply bg-pill text-pill-txt px-2.5 py-0.5 rounded-full text-xs border border-line;
+}
+
+.hover-bg {
+  @apply hover:bg-hover transition-colors duration-150;
+}
+
+/* Focus styles for accessibility */
+input:focus,
+button:focus,
+select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
