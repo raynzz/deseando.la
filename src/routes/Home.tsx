@@ -89,7 +89,7 @@ export default function Home() {
     <main className="container mx-auto max-w-5xl p-6 space-y-10">
       {/* Header */}
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">Deseándola — Home</h1>
+        <h1 className="text-2xl font-semibold">Deseándola — Homee</h1>
         <p className="text-sm opacity-80">Listado de deseos públicos (infinite scroll / “Load more”)</p>
       </header>
 
