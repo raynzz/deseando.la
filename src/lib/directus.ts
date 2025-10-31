@@ -1,26 +1,7 @@
 // src/lib/directus.ts
 // Cliente centralizado Directus con URLs ABSOLUTAS (nunca relativas).
+// Soluciona "possibly undefined" para TypeScript y expone getBaseUrl(): string.
 
-// =========================
-// Environment (Vite build-time)
-// =========================
-const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL as string | undefined;
-const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as string | undefined;
-
-if (!DIRECTUS_URL) {
-  // Cortamos en build/runtime si falta, para evitar fallback a window.location.origin
-  throw new Error('VITE_DIRECTUS_URL is not defined at build time');
-}
-
-// Debug
-console.log('🔗 Configuración Directus:', {
-  DIRECTUS_URL,
-  hasToken: Boolean(DIRECTUS_TOKEN),
-});
-
-// =========================
-// Utils
-// =========================
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 type ApiOptions = {
@@ -30,12 +11,36 @@ type ApiOptions = {
   headers?: Record<string, string>;
 };
 
-type ApiResponse<T = any> = {
+export type ApiResponse<T = any> = {
   data: T | T[];
   meta?: any;
   errors?: any[];
 };
 
+// =========================
+// Environment (Vite build-time)
+// =========================
+const RAW_URL = import.meta.env.VITE_DIRECTUS_URL as string | undefined;
+const RAW_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as string | undefined;
+
+if (!RAW_URL || RAW_URL.trim() === '') {
+  // Cortamos en build/runtime si falta, para evitar fallback a window.location.origin
+  throw new Error('VITE_DIRECTUS_URL is not defined at build time');
+}
+
+// A partir de aquí, Directus URL es string seguro
+const DIRECTUS_URL: string = RAW_URL.trim();
+const DIRECTUS_TOKEN: string | undefined = RAW_TOKEN?.trim();
+
+// Debug controlado
+console.log('🔗 Configuración Directus:', {
+  DIRECTUS_URL,
+  hasToken: Boolean(DIRECTUS_TOKEN),
+});
+
+// =========================
+// Utils
+// =========================
 function toQuery(params?: Record<string, any>) {
   const qs = new URLSearchParams();
   if (!params) return '';
@@ -72,6 +77,7 @@ function toQuery(params?: Record<string, any>) {
 }
 
 function absoluteUrl(path: string, params?: Record<string, any>) {
+  // DIRECTUS_URL es string garantizado (ver guard arriba)
   const base = DIRECTUS_URL.replace(/\/+$/, '');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${base}${cleanPath}${toQuery(params)}`;
@@ -121,7 +127,7 @@ function getPublicWishesFilter() {
   return {
     filter: {
       visibility: { _eq: 'public' },
-      // Si usas status de Directus:
+      // Si usas status de Directus para publicados:
       // status: { _eq: 'published' },
     },
   };
@@ -131,27 +137,4 @@ function getPublicWishesFilter() {
 /** API de Dominio: Wishes */
 // =========================
 export const wishApi = {
-  async getWishes(params: Record<string, any> = {}) {
-    const mergedParams = {
-      sort: params.sort ?? '-id',
-      limit: params.limit ?? 12,
-      offset: params.offset ?? 0,
-      ...getPublicWishesFilter(),
-      ...params,
-    };
-    return api('/items/wishes', { method: 'GET', params: mergedParams });
-  },
-
-  async getWishById(id: string | number) {
-    if (!id && id !== 0) throw new Error('getWishById: id requerido');
-    return api(`/items/wishes/${id}`, { method: 'GET' });
-  },
-};
-
-// Helpers públicos
-export function getBaseUrl() {
-  return DIRECTUS_URL;
-}
-
-// Tipos de respuesta (opcional re-export)
-export type { ApiResponse };
+  async getWishes(params: Record<stri

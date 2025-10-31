@@ -10,7 +10,7 @@ type HealthState =
   | { status: 'error'; error: string; checkedAt: string };
 
 export default function Home() {
-  // Parámetros base (ajústalos a gusto)
+  // Parámetros base
   const pageSize = 12;
   const sort = '-id';
   const visibility: 'public' = 'public';
@@ -33,12 +33,14 @@ export default function Home() {
     enabled: true,
   });
 
-  // Datos listos para mostrar (aplanados)
+  // Datos listos para mostrar
   const wishes = (data?.list ?? []) as Wish[];
   const totalShown = wishes.length;
 
-  // Construye la URL de la primera página (útil para depurar)
-  const baseUrl = getBaseUrl();
+  // URL de Directus (tipo estricto)
+  const baseUrl: string = getBaseUrl();
+
+  // Primera página (debug en UI)
   const firstPageUrl = useMemo(() => {
     const qs = new URLSearchParams({
       sort,
@@ -186,7 +188,6 @@ export default function Home() {
                   <div className="text-base font-semibold">
                     {(w as any).title || (w as any).name || '(sin título)'}
                   </div>
-                  {/* Agrega más campos si tu colección los tiene */}
                 </li>
               ))}
             </ul>
