@@ -25,7 +25,7 @@ const Footer = () => {
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted">
           <div className="mb-2 md:mb-0">
-            <span className="font-medium">Deseandola</span> - Plataforma de Deseos
+            <span className="font-medium">Regalos</span> - Plataforma de Regalos
           </div>
           <div className="flex flex-col md:flex-row gap-2 md:gap-4 text-xs">
             <span>
@@ -40,9 +40,9 @@ const Footer = () => {
           </div>
         </div>
         <div className="mt-4 pt-4 border-t border-line text-center text-xs text-muted">
-          <p>Frontend: <span className="font-mono">hoztlat-deseandola.6vlrrp.easypanel.host</span></p>
+          <p>Frontend: <span className="font-mono">hoztlat-regalos.6vlrrp.easypanel.host</span></p>
           <p>Backend: <span className="font-mono">hoztlat-regalos.6vlrrp.easypanel.host</span></p>
-          <p className="mt-1">© 2024 Deseandola. Todos los derechos reservados.</p>
+          <p className="mt-1">© 2024 Regalos. Todos los derechos reservados.</p>
         </div>
       </div>
     </footer>

@@ -1,4 +1,4 @@
-import type { Event } from '../features/wishes/types'
+import type { Event } from '../features/gifts/types'
 
 interface EventCardProps {
   event: Event
@@ -21,6 +21,7 @@ const EventCard = ({ event }: EventCardProps) => {
       <div className="text-sm text-muted space-y-1">
         <div>📅 {event.date ? formatDate(event.date) : 'Fecha no especificada'}</div>
         {event.location && <div>📍 {event.location}</div>}
+        {event.status && <div>🎯 Estado: {event.status}</div>}
       </div>
     </div>
   )

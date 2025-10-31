@@ -1,160 +1,246 @@
-// src/lib/directus.ts
-// Cliente centralizado para Directus con URLs ABSOLUTAS y helpers estrictos.
+import type { 
+  GiftsQueryParams,
+  EventsQueryParams,
+  ContributionsQueryParams,
+  UserInfo,
+  Gift,
+  Event,
+  Contribution
+} from '../features/gifts/types';
 
-type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+// Environment variables - Vite usa import.meta.env
+const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'https://hoztlat-regalos.6vlrrp.easypanel.host';
+const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN || '8CzN175Z3ibcoDZQRnD3v86AkZAcoaeh';
 
-type ApiOptions = {
-  method?: HttpMethod;
-  params?: Record<string, unknown>;
-  body?: unknown;
-  headers?: Record<string, string>;
-};
-
-export type ApiResponse<T = unknown> = {
-  data: T | T[];
-  meta?: unknown;
-  errors?: unknown[];
-};
-
-// =========================
-// Environment (Vite build-time)
-// =========================
-const RAW_URL = import.meta.env.VITE_DIRECTUS_URL as string | undefined;
-const RAW_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as string | undefined;
-
-if (!RAW_URL || RAW_URL.trim() === '') {
-  throw new Error('VITE_DIRECTUS_URL is not defined at build time');
-}
-
-const DIRECTUS_URL: string = RAW_URL.trim();
-const DIRECTUS_TOKEN: string | undefined = RAW_TOKEN?.trim();
-
-console.log('🔗 Configuración Directus:', {
-  DIRECTUS_URL,
-  hasToken: Boolean(DIRECTUS_TOKEN),
+console.log('🔗 Configuración Directus:', { 
+  DIRECTUS_URL, 
+  DIRECTUS_TOKEN: DIRECTUS_TOKEN ? '***' : 'No configurado' 
 });
 
-// =========================
-// Utils
-// =========================
-function toQuery(params?: Record<string, unknown>): string {
-  const qs = new URLSearchParams();
-  if (!params) return '';
-
-  const append = (key: string, value: unknown) => {
-    if (value === undefined || value === null) return;
-    qs.append(key, String(value));
+// API response types
+interface ApiResponse<T> {
+  data: T[];
+  meta?: {
+    total_count: number;
   };
-
-  for (const [key, value] of Object.entries(params)) {
-    if (Array.isArray(value)) {
-      value.forEach((v) => append(key, v));
-      continue;
-    }
-    if (typeof value === 'object' && value !== null) {
-      if (key === 'filter') {
-        for (const [fKey, fVal] of Object.entries(value as Record<string, unknown>)) {
-          if (typeof fVal === 'object' && fVal !== null) {
-            for (const [opKey, opVal] of Object.entries(fVal as Record<string, unknown>)) {
-              append(`filter[${fKey}][${opKey}]`, opVal);
-            }
-          } else {
-            append(`filter[${fKey}]`, fVal);
-          }
-        }
-      } else {
-        // Cualquier otro objeto lo serializamos
-        append(key, JSON.stringify(value));
-      }
-      continue;
-    }
-    append(key, value);
-  }
-
-  const s = qs.toString();
-  return s ? `?${s}` : '';
 }
 
-function absoluteUrl(path: string, params?: Record<string, unknown>): string {
-  const base = DIRECTUS_URL.replace(/\/+$/, '');
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  return `${base}${cleanPath}${toQuery(params)}`;
+interface ApiItemResponse<T> {
+  data: T;
 }
 
-async function api<T = unknown>(path: string, opts: ApiOptions = {}): Promise<ApiResponse<T>> {
-  const { method = 'GET', params, body, headers = {} } = opts;
-  const url = absoluteUrl(path, params);
-
-  const finalHeaders: Record<string, string> = {
+// Helper function to add authentication headers
+const getAuthHeaders = (_method: string = 'GET') => {
+  const headers: Record<string, string> = {
+    'Accept': 'application/json',
     'Content-Type': 'application/json',
-    ...headers,
   };
-  if (DIRECTUS_TOKEN && !finalHeaders.Authorization) {
-    finalHeaders.Authorization = `Bearer ${DIRECTUS_TOKEN}`;
+  
+  if (DIRECTUS_TOKEN && DIRECTUS_TOKEN.trim()) {
+    headers['Authorization'] = `Bearer ${DIRECTUS_TOKEN.trim()}`;
   }
+  
+  return headers;
+};
 
-  console.log('📡 Llamando a API:', method, path, params || {});
-  console.log('🌐 URL completa:', url);
-
-  const res = await fetch(url, {
-    method,
-    headers: finalHeaders,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-
-  const text = await res.text();
-  let json: ApiResponse<T> | null = null;
+// API helper function
+export const api = async <T>(
+  path: string, 
+  options: {
+    method?: string;
+    body?: any;
+    params?: Record<string, any>;
+  } = {}
+): Promise<ApiResponse<T> | ApiItemResponse<T>> => {
   try {
-    json = text ? (JSON.parse(text) as ApiResponse<T>) : ({} as ApiResponse<T>);
-  } catch {
-    // respuesta no-JSON
+    const { method = 'GET', body, params = {} } = options;
+    
+    console.log(`Llamando a API: ${method} ${path}`, { params, body });
+    
+    // Asegurarse de que la URL no esté vacía
+    if (!DIRECTUS_URL) {
+      throw new Error('DIRECTUS_URL no está configurada');
+    }
+    
+    const url = new URL(DIRECTUS_URL.replace(/\/$/, '') + path);
+    
+    // Add query parameters
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        url.searchParams.set(key, String(value));
+      }
+    });
+    
+    const fetchOptions: RequestInit = {
+      method,
+      headers: getAuthHeaders(method),
+    };
+    
+    if (body && (method === 'POST' || method === 'PATCH' || method === 'PUT')) {
+      fetchOptions.body = JSON.stringify(body);
+    }
+    
+    console.log('URL completa:', url.toString());
+    console.log('Headers:', fetchOptions.headers);
+    
+    const response = await fetch(url.toString(), fetchOptions);
+    
+    console.log(`Respuesta HTTP: ${response.status} ${response.statusText}`);
+    
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`No autorizado. Verifica tu token o permisos. Status: ${response.status}`);
+      }
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const responseData = await response.json();
+    console.log('Respuesta JSON:', responseData);
+    
+    return responseData;
+  } catch (error) {
+    console.error('Directus API Error:', error);
+    throw error;
   }
+};
 
-  if (!res.ok) {
-    console.error('❌ HTTP Error:', res.status, text || json);
-    throw new Error(`HTTP ${res.status}: ${text || JSON.stringify(json)}`);
-  }
-
-  return (json || { data: null }) as ApiResponse<T>;
-}
-
-// =========================
-// Filtros comunes
-// =========================
-function getPublicWishesFilter() {
+// Public gifts filter (when no token is provided)
+export const getPublicGiftsFilter = () => {
   return {
-    filter: {
-      visibility: { _eq: 'public' },
-      // Si usas status publicados en Directus:
-      // status: { _eq: 'published' },
-    },
+    'filter[visibility][_eq]': 'public'
   };
-}
+};
 
-// =========================
-// API de Dominio: Wishes
-// =========================
-export const wishApi = {
-  async getWishes(params: Record<string, unknown> = {}) {
-    const mergedParams = {
-      sort: (params as any).sort ?? '-id',
-      limit: (params as any).limit ?? 12,
-      offset: (params as any).offset ?? 0,
-      ...getPublicWishesFilter(),
+// User info endpoint
+export const getCurrentUser = async (): Promise<UserInfo | null> => {
+  try {
+    if (!DIRECTUS_TOKEN || !DIRECTUS_TOKEN.trim()) {
+      console.log('No hay token configurado, no se puede obtener usuario');
+      return null;
+    }
+    
+    console.log('Intentando obtener usuario actual...');
+    const response = await api<{ data: UserInfo }>('/users/me', { method: 'GET' });
+    console.log('Usuario obtenido:', (response as any).data);
+    return (response as any).data;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
+  }
+};
+
+// API endpoints
+export const giftApi = {
+  // List gifts with pagination and filters
+  getGifts: async (params: GiftsQueryParams = {}): Promise<ApiResponse<Gift>> => {
+    console.log('Obteniendo lista de regalos con params:', params);
+    
+    const defaultParams = {
+      sort: '-id',
+      limit: 12,
+      offset: 0,
+      ...getPublicGiftsFilter(),
       ...params,
     };
-    return api('/items/wishes', { method: 'GET', params: mergedParams });
+    
+    // Add search functionality
+    if (params.search) {
+      (defaultParams as any)['_or[0][title][_icontains]'] = params.search;
+      (defaultParams as any)['_or[1][description][_icontains]'] = params.search;
+    }
+    
+    console.log('Params finales para obtener regalos:', defaultParams);
+    
+    const response = await api<Gift>('/items/gifts', {
+      method: 'GET',
+      params: defaultParams
+    });
+    
+    console.log('Respuesta de regalos:', response);
+    return response as ApiResponse<Gift>;
   },
-
-  async getWishById(id: string | number) {
-    if (!id && id !== 0) throw new Error('getWishById: id requerido');
-    return api(`/items/wishes/${id}`, { method: 'GET' });
+  
+  // Get single gift
+  getGift: async (id: number): Promise<ApiItemResponse<Gift>> => {
+    console.log(`Obteniendo regalo con id: ${id}`);
+    
+    const response = await api<Gift>(`/items/gifts/${id}`, {
+      method: 'GET',
+      params: {}
+    });
+    
+    console.log(`Respuesta de regalo ${id}:`, response);
+    return response as ApiItemResponse<Gift>;
+  },
+  
+  // Get events for a gift
+  getEvents: async (giftId: number, params: EventsQueryParams = {}): Promise<ApiResponse<Event>> => {
+    console.log(`Obteniendo eventos para regalo: ${giftId}`, params);
+    
+    const response = await api<Event>('/items/events', {
+      method: 'GET',
+      params: {
+        'filter[gift][_eq]': giftId,
+        sort: '-date',
+        limit: 20,
+        ...params,
+      }
+    });
+    
+    console.log(`Respuesta de eventos ${giftId}:`, response);
+    return response as ApiResponse<Event>;
+  },
+  
+  // Get contributions for a gift
+  getContributions: async (giftId: number, params: ContributionsQueryParams = {}): Promise<ApiResponse<Contribution>> => {
+    console.log(`Obteniendo contribuciones para regalo: ${giftId}`, params);
+    
+    const response = await api<Contribution>('/items/contributions', {
+      method: 'GET',
+      params: {
+        'filter[gift][_eq]': giftId,
+        sort: '-date',
+        limit: 20,
+        ...params,
+      }
+    });
+    
+    console.log(`Respuesta de contribuciones ${giftId}:`, response);
+    return response as ApiResponse<Contribution>;
+  },
+  
+  // Create gift (prepared for future use)
+  createGift: async (giftData: Partial<Gift>): Promise<ApiItemResponse<Gift>> => {
+    if (!DIRECTUS_TOKEN || !DIRECTUS_TOKEN.trim()) {
+      throw new Error('Authentication required to create gifts');
+    }
+    
+    const response = await api<Gift>('/items/gifts', {
+      method: 'POST',
+      body: giftData
+    });
+    return response as ApiItemResponse<Gift>;
   },
 };
 
-// =========================
-// Helper público
-// =========================
-export function getBaseUrl(): string {
-  return DIRECTUS_URL;
-}
+// Collections API
+export const collectionsApi = {
+  // List collections
+  getCollections: async () => {
+    console.log('Obteniendo lista de colecciones...');
+    
+    const response = await api('/collections', {
+      method: 'GET',
+      params: {
+        fields: 'collection,meta.icon',
+        limit: -1
+      }
+    });
+    
+    console.log('Respuesta de colecciones:', response);
+    return response as ApiResponse<any>;
+  },
+};
+
+// Export types for convenience
+export type { Gift, Event, Contribution };

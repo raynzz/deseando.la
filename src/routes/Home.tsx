@@ -1,217 +1,106 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useInfiniteWishes } from '@/features/wishes/hooks';
-import type { Wish } from '@/features/wishes/types';
-import { getBaseUrl } from '@/lib/directus';
+import { useGifts } from '../features/gifts/hooks'
+import Loader from '../components/Loader'
+import EmptyState from '../components/EmptyState'
+import GiftCard from '../components/GiftCard'
 
-type HealthState =
-  | { status: 'idle' }
-  | { status: 'checking' }
-  | { status: 'ok'; info: any; checkedAt: string }
-  | { status: 'error'; error: string; checkedAt: string };
+const Home = () => {
+  const { data: gifts, isLoading, error } = useGifts()
 
-export default function Home() {
-  // Parámetros base
-  const pageSize = 12;
-  const sort = '-id';
-  const visibility: 'public' = 'public';
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader />
+      </div>
+    )
+  }
 
-  // Hook infinito
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isFetching,
-  } = useInfiniteWishes({
-    pageSize,
-    sort,
-    visibility,
-    enabled: true,
-  });
-
-  // Datos listos para mostrar
-  const wishes = (data?.list ?? []) as Wish[];
-  const totalShown = wishes.length;
-
-  // URL de Directus (tipo estricto)
-  const baseUrl: string = getBaseUrl();
-
-  // Primera página (debug en UI)
-  const firstPageUrl = useMemo(() => {
-    const qs = new URLSearchParams({
-      sort,
-      limit: String(pageSize),
-      offset: String(0),
-      'filter[visibility][_eq]': visibility,
-    });
-    return `${baseUrl}/items/wishes?${qs.toString()}`;
-  }, [baseUrl, pageSize, sort, visibility]);
-
-  // Monitor de conexión a Directus (/server/health)
-  const [health, setHealth] = useState<HealthState>({ status: 'idle' });
-
-  useEffect(() => {
-    let mounted = true;
-    const check = async () => {
-      try {
-        setHealth({ status: 'checking' });
-        const res = await fetch(`${baseUrl.replace(/\/+$/, '')}/server/health`, {
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const txt = await res.text();
-        const json = txt ? JSON.parse(txt) : {};
-        if (!mounted) return;
-        setHealth({
-          status: 'ok',
-          info: json,
-          checkedAt: new Date().toLocaleString(),
-        });
-      } catch (e: any) {
-        if (!mounted) return;
-        setHealth({
-          status: 'error',
-          error: e?.message || 'Unknown error',
-          checkedAt: new Date().toLocaleString(),
-        });
-      }
-    };
-    check();
-    return () => {
-      mounted = false;
-    };
-  }, [baseUrl]);
+  if (error) {
+    return (
+      <EmptyState 
+        title="Error al cargar"
+        description="No se pudieron cargar los regalos. Por favor, intenta de nuevo más tarde."
+      />
+    )
+  }
 
   return (
-    <main className="container mx-auto max-w-5xl p-6 space-y-10">
-      {/* Header */}
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold">Deseándola — Home</h1>
-        <p className="text-sm opacity-80">Listado de deseos públicos (infinite scroll / “Load more”)</p>
-      </header>
-
-      {/* Monitor de conexión y resumen de consulta */}
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-2xl border p-4 shadow-sm">
-          <h2 className="text-lg font-medium mb-3">🔍 Resumen de consulta</h2>
-          <div className="text-sm space-y-1">
-            <div><span className="font-semibold">Directus URL:</span> {baseUrl}</div>
-            <div><span className="font-semibold">Endpoint (1ª página):</span> <code className="break-all">{firstPageUrl}</code></div>
-            <div>
-              <span className="font-semibold">Estado Query:</span>{' '}
-              {isLoading ? 'loading…' : isError ? 'error' : 'success'}
-              {isFetching && !isLoading ? ' (actualizando…)': null}
-            </div>
-            {!isLoading && !isError && (
-              <>
-                <div><span className="font-semibold">Tamaño de página:</span> {pageSize}</div>
-                <div><span className="font-semibold">Items mostrados:</span> {totalShown}</div>
-              </>
-            )}
-            {isError && (
-              <div className="text-red-600">
-                <span className="font-semibold">Error:</span>{' '}
-                {(error as Error)?.message || 'Unknown error'}
-              </div>
-            )}
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <section className="text-center py-12 bg-gradient-to-r from-brand/10 to-brand/5 rounded-lg border border-line">
+        <h1 className="text-4xl md:text-5xl font-bold text-brand mb-4">
+          Regalos
+        </h1>
+        <p className="text-xl text-muted mb-6 max-w-2xl mx-auto">
+          Comparte tus regalos y deseos con el mundo. Una plataforma para transformar tus aspiraciones en realidad.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="bg-white rounded-lg border border-line px-6 py-3">
+            <div className="text-2xl font-bold text-brand">{gifts?.length || 0}</div>
+            <div className="text-sm text-muted">Regalos Compartidos</div>
           </div>
-
-          {/* Controles de la query */}
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={() => refetch()}
-              className="rounded-lg border px-3 py-1 text-sm hover:bg-black/5"
-            >
-              Reintentar
-            </button>
-
-            <button
-              onClick={() => fetchNextPage()}
-              disabled={!hasNextPage || isFetchingNextPage}
-              className={`rounded-lg border px-3 py-1 text-sm ${(!hasNextPage || isFetchingNextPage) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/5'}`}
-              title={!hasNextPage ? 'No hay más páginas' : 'Cargar más'}
-            >
-              {isFetchingNextPage ? 'Cargando…' : hasNextPage ? 'Cargar más' : 'No hay más'}
-            </button>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border p-4 shadow-sm">
-          <h2 className="text-lg font-medium mb-3">🩺 Monitor de conexión (server/health)</h2>
-          <div className="text-sm space-y-1">
-            <div><span className="font-semibold">Estado:</span> {health.status}</div>
-            {'checkedAt' in health && health.checkedAt && (
-              <div><span className="font-semibold">Última verificación:</span> {health.checkedAt}</div>
-            )}
-            {health.status === 'ok' && (
-              <details className="mt-2">
-                <summary className="cursor-pointer">Ver respuesta</summary>
-                <pre className="mt-2 p-2 bg-black/5 rounded text-xs overflow-auto">
-                  {JSON.stringify(health.info, null, 2)}
-                </pre>
-              </details>
-            )}
-            {health.status === 'error' && (
-              <div className="text-red-600">
-                <span className="font-semibold">Error:</span> {health.error}
-              </div>
-            )}
+          <div className="bg-white rounded-lg border border-line px-6 py-3">
+            <div className="text-2xl font-bold text-brand">🎁</div>
+            <div className="text-sm text-muted">Deseos Cumplidos</div>
           </div>
         </div>
       </section>
 
-      {/* Lista de deseos */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-medium">🧾 Resultados</h2>
+      {/* Gifts Section */}
+      <section>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-brand">
+            Regalos Recientes
+          </h2>
+          <div className="text-sm text-muted">
+            Mostrando {gifts?.length || 0} regalos
+          </div>
+        </div>
 
-        {isLoading && <p className="opacity-70">Cargando…</p>}
-
-        {isError && (
-          <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-red-700">
-            Ocurrió un error al cargar los deseos.
+        {!gifts || gifts.length === 0 ? (
+          <EmptyState 
+            title="No se encontraron regalos"
+            description="Aún no hay regalos públicos disponibles. ¡Sé el primero en compartir uno!"
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {gifts.map((gift) => (
+              <GiftCard key={gift.id} gift={gift} />
+            ))}
           </div>
         )}
-
-        {!isLoading && !isError && totalShown === 0 && (
-          <p className="opacity-70">No hay deseos públicos disponibles.</p>
-        )}
-
-        {!isLoading && !isError && totalShown > 0 && (
-          <>
-            <ul className="grid gap-4 md:grid-cols-2">
-              {wishes.map((w) => (
-                <li key={w.id} className="rounded-xl border p-4 shadow-sm">
-                  <div className="text-sm opacity-70">ID: {w.id}</div>
-                  <div className="text-base font-semibold">
-                    {(w as any).title || (w as any).name || '(sin título)'}
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            {/* Controles al pie también */}
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                onClick={() => refetch()}
-                className="rounded-lg border px-3 py-1 text-sm hover:bg-black/5"
-              >
-                Reintentar
-              </button>
-
-              <button
-                onClick={() => fetchNextPage()}
-                disabled={!hasNextPage || isFetchingNextPage}
-                className={`rounded-lg border px-3 py-1 text-sm ${(!hasNextPage || isFetchingNextPage) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/5'}`}
-              >
-                {isFetchingNextPage ? 'Cargando…' : hasNextPage ? 'Cargar más' : 'No hay más'}
-              </button>
-            </div>
-          </>
-        )}
       </section>
-    </main>
-  );
+
+      {/* Features Section */}
+      <section className="py-12 bg-gradient-to-r from-brand/5 to-transparent rounded-lg border border-line">
+        <h2 className="text-2xl font-bold text-brand mb-8 text-center">
+          Características de Regalos
+        </h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="text-center">
+            <div className="text-3xl mb-3">🎁</div>
+            <h3 className="font-semibold text-brand mb-2">Comparte tus Regalos</h3>
+            <p className="text-sm text-muted">
+              Expresa tus deseos y regalos soñados de manera sencilla y visual.
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl mb-3">🎯</div>
+            <h3 className="font-semibold text-brand mb-2">Define Metas</h3>
+            <p className="text-sm text-muted">
+              Establece objetivos claros y seguimiento de progreso para cada regalo.
+            </p>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl mb-3">🤝</div>
+            <h3 className="font-semibold text-brand mb-2">Conecta con Otros</h3>
+            <p className="text-sm text-muted">
+              Comparte experiencias y apoya a otros en su camino hacia sus regalos soñados.
+            </p>
+          </div>
+        </div>
+      </section>
+    </div>
+  )
 }
+
+export default Home

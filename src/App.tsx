@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './routes/Home'
-import WishDetail from './routes/WishDetail'
+import GiftDetail from './routes/GiftDetail'
 import Admin from './routes/Admin'
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
       <main className="flex-grow container mx-auto px-4 py-8">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/wish/:id" element={<WishDetail />} />
+          <Route path="/gift/:id" element={<GiftDetail />} />
           <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
