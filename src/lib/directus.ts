@@ -136,7 +136,6 @@ export const wishApi = {
     console.log('Obteniendo lista de deseos con params:', params);
     
     const defaultParams = {
-      fields: 'id,title,description,status,visibility,goal_amount,collected_amount,cover_image',
       sort: '-id',
       limit: 12,
       offset: 0,
@@ -167,9 +166,7 @@ export const wishApi = {
     
     const response = await api<Wish>(`/items/wishes/${id}`, {
       method: 'GET',
-      params: {
-        fields: 'id,title,description,status,visibility,goal_amount,collected_amount,cover_image,owner'
-      }
+      params: {}
     });
     
     console.log(`Respuesta de deseo ${id}:`, response);
@@ -183,7 +180,6 @@ export const wishApi = {
     const response = await api<Event>('/items/events', {
       method: 'GET',
       params: {
-        fields: 'id,title,description,date,location',
         'filter[wish][_eq]': wishId,
         sort: '-date',
         limit: 20,
@@ -202,7 +198,6 @@ export const wishApi = {
     const response = await api<Gift>('/items/gifts', {
       method: 'GET',
       params: {
-        fields: 'id,title,description,price,status,image',
         'filter[wish][_eq]': wishId,
         sort: '-id',
         limit: 20,
