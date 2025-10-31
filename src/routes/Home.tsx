@@ -25,33 +25,35 @@ function truncate(s?: string | null, n = 120) {
 }
 
 /* ---------------------------------- */
-/* Modal de registro                   */
+/* Modal de Registro                   */
 /* ---------------------------------- */
 function SignupModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [name, setName] = useState(''), [email, setEmail] = useState(''), [link, setLink] = useState('');
-  if (!open) return null;
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [link, setLink] = useState('');
 
   const valid = name.trim() !== '' && /\S+@\S+\.\S+/.test(email);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Integración real pendiente (endpoint)
     console.log('📝 Registro:', { name, email, link });
     onClose();
     setName(''); setEmail(''); setLink('');
   };
 
+  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h3 className="text-lg font-semibold">Creá tu cuenta</h3>
           <button onClick={onClose} className="rounded-full p-2 hover:bg-black/5" aria-label="Cerrar">✕</button>
         </div>
-
         <form onSubmit={submit} className="space-y-4">
           <div>
             <label className="mb-1 block text-sm font-medium">Nombre</label>
-            <input className="w-full rounded-lg border px-3 py-2 outline-none focus:ring" value={name} onChange={e=>setName(e.target.value)} />
+            <input className="w-full rounded-lg border px-3 py-2 outline-none focus:ring" value={name} onChange={e=>setName(e.target.value)} autoFocus />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">Email</label>
@@ -60,7 +62,7 @@ function SignupModal({ open, onClose }: { open: boolean; onClose: () => void }) 
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">Enlace (opcional)</label>
-            <input type="url" className="w-full rounded-lg border px-3 py-2 outline-none focus:ring" value={link} onChange={e=>setLink(e.target.value)} placeholder="Perfil, web, lista de regalos…" />
+            <input type="url" className="w-full rounded-lg border px-3 py-2 outline-none focus:ring" placeholder="Perfil, web, lista de regalos…" value={link} onChange={e=>setLink(e.target.value)} />
           </div>
           <button disabled={!valid} className={`w-full rounded-lg px-4 py-2 font-medium text-white ${valid ? 'bg-black hover:bg-neutral-800' : 'bg-neutral-400 cursor-not-allowed'}`}>Crear cuenta</button>
         </form>
@@ -70,7 +72,7 @@ function SignupModal({ open, onClose }: { open: boolean; onClose: () => void }) 
 }
 
 /* ---------------------------------- */
-/* Bento + Carrusel                    */
+/* Bento Grid                          */
 /* ---------------------------------- */
 function BentoSection() {
   return (
@@ -100,6 +102,9 @@ function BentoSection() {
   );
 }
 
+/* ---------------------------------- */
+/* Carrusel de Casos de Uso            */
+/* ---------------------------------- */
 type UseCase = { title: string; desc: string; emoji: string };
 const USE_CASES: UseCase[] = [
   { title: 'Planificar un viaje', desc: 'Organizá etapas y conseguí apoyo.', emoji: '🧭' },
@@ -113,21 +118,23 @@ function UseCasesCarousel() {
   const [index, setIndex] = useState(0);
   const prev = () => setIndex(i => (i === 0 ? USE_CASES.length - 1 : i - 1));
   const next = () => setIndex(i => (i === USE_CASES.length - 1 ? 0 : i + 1));
+
   return (
     <section className="mx-auto max-w-5xl px-4">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold">¿Para qué podés usarlo?</h2>
-          <p className="text-sm opacity-80">Elegí ideas y empezá hoy.</p>
         </div>
         <div className="flex gap-2">
           <button onClick={prev} className="rounded-lg border px-3 py-1 text-sm hover:bg-black/5" aria-label="Anterior">‹</button>
           <button onClick={next} className="rounded-lg border px-3 py-1 text-sm hover:bg-black/5" aria-label="Siguiente">›</button>
         </div>
       </div>
+
       <div className="relative">
         <div className="overflow-hidden rounded-2xl border bg-white">
-          <div className="flex transition-transform duration-300" style={{ transform: `translateX(-${index * 100}%)`, width: `${USE_CASES.length * 100}%` }}>
+          <div className="flex transition-transform duration-300"
+               style={{ transform: `translateX(-${index * 100}%)`, width: `${USE_CASES.length * 100}%` }}>
             {USE_CASES.map((c, i) => (
               <div key={i} className="w-full shrink-0 p-6 md:p-8" style={{ width: `${100 / USE_CASES.length}%` }}>
                 <div className="mx-auto max-w-3xl rounded-xl border p-6 shadow-sm">
@@ -150,48 +157,110 @@ function UseCasesCarousel() {
 }
 
 /* ---------------------------------- */
-/* Sidebar Monitor                     */
+/* Sidebar de Monitor (ARREGLADO)     */
 /* ---------------------------------- */
 function DebugSidebar({
-  open, onClose, baseUrl, firstPageUrl, pageSize, totalShown,
-  isLoading, isError, error, health, refetch, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching,
+  open,
+  onOpen,
+  onClose,
+  baseUrl,
+  firstPageUrl,
+  pageSize,
+  totalShown,
+  isLoading,
+  isError,
+  error,
+  health,
+  refetch,
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
+  isFetching,
 }: {
-  open: boolean; onClose: () => void; baseUrl: string; firstPageUrl: string;
-  pageSize: number; totalShown: number; isLoading: boolean; isError: boolean; error: unknown;
-  health: HealthState; refetch: () => void; fetchNextPage: () => void; hasNextPage?: boolean;
-  isFetchingNextPage: boolean; isFetching: boolean;
+  open: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  baseUrl: string;
+  firstPageUrl: string;
+  pageSize: number;
+  totalShown: number;
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  health: HealthState;
+  refetch: () => void;
+  fetchNextPage: () => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage: boolean;
+  isFetching: boolean;
 }) {
   return (
     <>
-      <button onClick={onClose} className={`fixed right-4 top-24 z-[55] rounded-full border bg-white px-3 py-1 text-sm shadow-sm hover:bg-black/5 md:right-6 ${open ? 'opacity-0 pointer-events-none' : ''}`}>Monitor</button>
-      <aside className={`fixed right-0 top-0 z-[60] h-full w-full max-w-md transform bg-white shadow-xl transition-transform duration-300 md:rounded-l-2xl ${open ? 'translate-x-0' : 'translate-x-full'}`} aria-hidden={!open}>
+      {/* Botón flotante para ABRIR */}
+      <button
+        onClick={onOpen}
+        className={`fixed right-4 top-24 z-[55] rounded-full border bg-white px-3 py-1 text-sm shadow-sm hover:bg-black/5 md:right-6 ${open ? 'opacity-0 pointer-events-none' : ''}`}
+      >
+        Monitor
+      </button>
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed right-0 top-0 z-[60] h-full w-full max-w-md transform bg-white shadow-xl transition-transform duration-300 md:rounded-l-2xl ${open ? 'translate-x-0' : 'translate-x-full'}`}
+        aria-hidden={!open}
+      >
         <div className="flex items-center justify-between border-b p-4">
           <h3 className="text-base font-semibold">Monitor de conexión</h3>
           <button onClick={onClose} className="rounded-full p-2 hover:bg-black/5" aria-label="Cerrar">✕</button>
         </div>
+
         <div className="space-y-4 p-4 text-sm">
           <div><div className="font-semibold">Directus URL:</div><div className="break-all">{baseUrl}</div></div>
           <div><div className="font-semibold">Endpoint (1ª página):</div><code className="break-all">{firstPageUrl}</code></div>
           <div><span className="font-semibold">Estado Query:</span> {isLoading ? 'loading…' : isError ? 'error' : 'success'}{isFetching && !isLoading ? ' (actualizando…)': null}</div>
-          {!isLoading && !isError && (<>
-            <div><span className="font-semibold">Tamaño de página:</span> {pageSize}</div>
-            <div><span className="font-semibold">Items mostrados:</span> {totalShown}</div>
-          </>)}
-          {isError && (<div className="text-red-600"><span className="font-semibold">Error:</span> {(error as Error)?.message || 'Unknown error'}</div>)}
+
+          {!isLoading && !isError && (
+            <>
+              <div><span className="font-semibold">Tamaño de página:</span> {pageSize}</div>
+              <div><span className="font-semibold">Items mostrados:</span> {totalShown}</div>
+            </>
+          )}
+
+          {isError && (
+            <div className="text-red-600">
+              <span className="font-semibold">Error:</span> {(error as Error)?.message || 'Unknown error'}
+            </div>
+          )}
+
           <div className="flex gap-2 pt-2">
             <button onClick={refetch} className="rounded-lg border px-3 py-1 hover:bg-black/5">Reintentar</button>
-            <button onClick={fetchNextPage} disabled={!hasNextPage || isFetchingNextPage} className={`rounded-lg border px-3 py-1 ${(!hasNextPage || isFetchingNextPage) ? 'cursor-not-allowed opacity-50' : 'hover:bg-black/5'}`}>{isFetchingNextPage ? 'Cargando…' : hasNextPage ? 'Cargar más' : 'No hay más'}</button>
+            <button
+              onClick={fetchNextPage}
+              disabled={!hasNextPage || isFetchingNextPage}
+              className={`rounded-lg border px-3 py-1 ${(!hasNextPage || isFetchingNextPage) ? 'cursor-not-allowed opacity-50' : 'hover:bg-black/5'}`}
+              title={!hasNextPage ? 'No hay más páginas' : 'Cargar más'}
+            >
+              {isFetchingNextPage ? 'Cargando…' : hasNextPage ? 'Cargar más' : 'No hay más'}
+            </button>
           </div>
+
           <div className="rounded-2xl border p-3">
             <div className="font-semibold">/server/health</div>
-            <div className="mt-1"><span className="font-semibold">Estado:</span> {health.status}{'checkedAt' in health && (health as any).checkedAt ? (<span className="ml-2 opacity-70">({(health as any).checkedAt})</span>) : null}</div>
+            <div className="mt-1">
+              <span className="font-semibold">Estado:</span> {health.status}
+              {'checkedAt' in health && (health as any).checkedAt ? (
+                <span className="ml-2 opacity-70">({(health as any).checkedAt})</span>
+              ) : null}
+            </div>
             {health.status === 'ok' && (
               <details className="mt-2">
                 <summary className="cursor-pointer">Ver respuesta</summary>
                 <pre className="mt-2 max-h-56 overflow-auto rounded bg-black/5 p-2 text-xs">{JSON.stringify((health as any).info, null, 2)}</pre>
               </details>
             )}
-            {health.status === 'error' && (<div className="mt-2 text-red-600"><span className="font-semibold">Error:</span> {(health as any).error}</div>)}
+            {health.status === 'error' && (
+              <div className="mt-2 text-red-600"><span className="font-semibold">Error:</span> {(health as any).error}</div>
+            )}
           </div>
         </div>
       </aside>
@@ -203,30 +272,43 @@ function DebugSidebar({
 /* Página Home                         */
 /* ---------------------------------- */
 export default function Home() {
-  const pageSize = 12, sort = '-id', visibility: 'public' = 'public';
+  // Parámetros
+  const pageSize = 12;
+  const sort = '-id';
+  const visibility: 'public' = 'public';
 
+  // Hook infinito
   const {
-    data, isLoading, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching,
+    data, isLoading, isError, error, refetch,
+    fetchNextPage, hasNextPage, isFetchingNextPage, isFetching,
   } = useInfiniteWishes({ pageSize, sort, visibility, enabled: true });
 
+  // Datos
   const wishes = (data?.list ?? []) as Wish[];
   const totalShown = wishes.length;
+
+  // Base URL
   const baseUrl: string = getBaseUrl();
 
+  // Endpoint 1ª página (para monitor)
   const firstPageUrl = useMemo(() => {
     const qs = new URLSearchParams({
-      sort, limit: String(pageSize), offset: String(0), 'filter[visibility][_eq]': visibility,
+      sort,
+      limit: String(pageSize),
+      offset: String(0),
+      'filter[visibility][_eq]': visibility,
     });
     return `${baseUrl}/items/wishes?${qs.toString()}`;
   }, [baseUrl, pageSize, sort, visibility]);
 
+  // Health
   const [health, setHealth] = useState<HealthState>({ status: 'idle' });
   useEffect(() => {
     let mounted = true;
-    const check = async () => {
+    (async () => {
       try {
         setHealth({ status: 'checking' });
-        const res = await fetch(`${baseUrl.replace(/\/+$/, '')}/server/health`, { headers: { 'Content-Type': 'application/json' }});
+        const res = await fetch(`${baseUrl.replace(/\/+$/, '')}/server/health`, { headers: { 'Content-Type': 'application/json' } });
         const txt = await res.text();
         const json = txt ? JSON.parse(txt) : {};
         if (!mounted) return;
@@ -235,11 +317,11 @@ export default function Home() {
         if (!mounted) return;
         setHealth({ status: 'error', error: e?.message || 'Unknown error', checkedAt: new Date().toLocaleString() });
       }
-    };
-    check();
+    })();
     return () => { mounted = false; };
   }, [baseUrl]);
 
+  // UI state
   const [showSignup, setShowSignup] = useState(false);
   const [showMonitor, setShowMonitor] = useState(false);
 
@@ -267,8 +349,8 @@ export default function Home() {
             <div className="rounded-2xl border p-6 text-sm opacity-80">
               <p>Subí la información de tu deseo, sumá apoyo y seguí el avance paso a paso. Todo en un mismo lugar.</p>
               <ul className="mt-3 list-disc space-y-1 pl-5">
-                <li>Listas organizadas para compartir</li>
-                <li>Conexión con aportes y colaboradores</li>
+                <li>Listas organizadas y fáciles de compartir</li>
+                <li>Conectá con aportes y colaboradores</li>
                 <li>Visibilidad pública o privada</li>
               </ul>
             </div>
@@ -276,18 +358,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Listado de deseos (cards con imagen) */}
+      {/* Listado de deseos: Cards con imagen */}
       <section className="mx-auto max-w-5xl space-y-3 px-4">
         <h2 className="text-lg font-semibold">Últimos deseos</h2>
 
         {isLoading && <p className="opacity-70">Cargando…</p>}
-
         {isError && (
           <div className="rounded-lg border border-red-300 bg-red-50 p-3 text-red-700">
             Ocurrió un error al cargar los deseos.
           </div>
         )}
-
         {!isLoading && !isError && totalShown === 0 && <p className="opacity-70">No hay deseos públicos disponibles.</p>}
 
         {!isLoading && !isError && totalShown > 0 && (
@@ -324,10 +404,14 @@ export default function Home() {
               })}
             </ul>
 
-            {/* Controles al pie */}
+            {/* Controles */}
             <div className="flex items-center gap-2 pt-2">
               <button onClick={() => refetch()} className="rounded-lg border px-3 py-1 text-sm hover:bg-black/5">Reintentar</button>
-              <button onClick={() => fetchNextPage()} disabled={!hasNextPage || isFetchingNextPage} className={`rounded-lg border px-3 py-1 text-sm ${(!hasNextPage || isFetchingNextPage) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/5'}`}>
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={!hasNextPage || isFetchingNextPage}
+                className={`rounded-lg border px-3 py-1 text-sm ${(!hasNextPage || isFetchingNextPage) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-black/5'}`}
+              >
                 {isFetchingNextPage ? 'Cargando…' : hasNextPage ? 'Cargar más' : 'No hay más'}
               </button>
             </div>
@@ -335,13 +419,14 @@ export default function Home() {
         )}
       </section>
 
-      {/* Bento & Carrusel */}
+      {/* Bento + Carrusel */}
       <div className="mt-14"><BentoSection /></div>
       <div className="mt-14 mb-24"><UseCasesCarousel /></div>
 
-      {/* Sidebar monitor */}
+      {/* Sidebar Monitor */}
       <DebugSidebar
         open={showMonitor}
+        onOpen={() => setShowMonitor(true)}
         onClose={() => setShowMonitor(false)}
         baseUrl={baseUrl}
         firstPageUrl={firstPageUrl}
@@ -358,7 +443,7 @@ export default function Home() {
         isFetching={isFetching}
       />
 
-      {/* Modal registro */}
+      {/* Modal de registro */}
       <SignupModal open={showSignup} onClose={() => setShowSignup(false)} />
     </main>
   );
