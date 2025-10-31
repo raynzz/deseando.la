@@ -19,7 +19,7 @@ export default defineConfig({
   },
   // Definir variables de entorno para el cliente
   define: {
-    'import.meta.env.VITE_DIRECTUS_URL': JSON.stringify('https://hoztlat-deseandola.6vlrrp.easypanel.host'),
+    'import.meta.env.VITE_DIRECTUS_URL': JSON.stringify('https://hoztlat-regalos.6vlrrp.easypanel.host'),
     'import.meta.env.VITE_DIRECTUS_TOKEN': JSON.stringify('8CzN175Z3ibcoDZQRnD3v86AkZAcoaeh'),
   },
 })
