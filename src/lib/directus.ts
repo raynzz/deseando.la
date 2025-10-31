@@ -1,28 +1,18 @@
 // src/lib/directus.ts
-// Cliente centralizado para consumir Directus con URLs ABSOLUTAS (nunca relativas)
-
-import type {
-  WishesQueryParams,
-  EventsQueryParams,
-  GiftsQueryParams,
-  UserInfo,
-  Wish,
-  Event,
-  Gift,
-} from '../features/wishes/types';
+// Cliente centralizado Directus con URLs ABSOLUTAS (nunca relativas).
 
 // =========================
 // Environment (Vite build-time)
 // =========================
-const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL;
-const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN; // opcional
+const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL as string | undefined;
+const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as string | undefined;
 
 if (!DIRECTUS_URL) {
-  // Rompemos en build/runtime si falta, para que no vuelva a caer en window.location.origin
+  // Cortamos en build/runtime si falta, para evitar fallback a window.location.origin
   throw new Error('VITE_DIRECTUS_URL is not defined at build time');
 }
 
-// Debug inicial
+// Debug
 console.log('🔗 Configuración Directus:', {
   DIRECTUS_URL,
   hasToken: Boolean(DIRECTUS_TOKEN),
@@ -55,11 +45,8 @@ function toQuery(params?: Record<string, any>) {
     qs.append(key, String(value));
   };
 
-  // Admite objetos como filter[visibility][_eq]=public etc.
   for (const [key, value] of Object.entries(params)) {
     if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-      // anidado simple (e.g., filter: { visibility: { _eq: 'public' } })
-      // Directus espera filter[visibility][_eq]=public
       if (key === 'filter') {
         for (const [fKey, fVal] of Object.entries(value as Record<string, any>)) {
           if (typeof fVal === 'object' && fVal !== null) {
@@ -71,11 +58,9 @@ function toQuery(params?: Record<string, any>) {
           }
         }
       } else {
-        // otros objetos, lo aplanamos en JSON por simplicidad
         append(key, JSON.stringify(value));
       }
     } else if (Array.isArray(value)) {
-      // múltiples valores (e.g., fields=*,relacion.*)
       value.forEach((v) => append(key, v));
     } else {
       append(key, value);
@@ -87,7 +72,6 @@ function toQuery(params?: Record<string, any>) {
 }
 
 function absoluteUrl(path: string, params?: Record<string, any>) {
-  // Garantiza que SIEMPRE apuntemos al host de Directus
   const base = DIRECTUS_URL.replace(/\/+$/, '');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${base}${cleanPath}${toQuery(params)}`;
@@ -107,10 +91,6 @@ async function api<T = any>(path: string, opts: ApiOptions = {}): Promise<ApiRes
 
   console.log('📡 Llamando a API:', method, path, params || {});
   console.log('🌐 URL completa:', url);
-  console.log('🧾 Headers:', {
-    ...finalHeaders,
-    ...(finalHeaders.Authorization ? { Authorization: '[REDACTED]' } : {}),
-  });
 
   const res = await fetch(url, {
     method,
@@ -123,7 +103,7 @@ async function api<T = any>(path: string, opts: ApiOptions = {}): Promise<ApiRes
   try {
     json = text ? (JSON.parse(text) as ApiResponse<T>) : ({} as ApiResponse<T>);
   } catch {
-    // si no es JSON, cae abajo
+    /* ignore non-JSON */
   }
 
   if (!res.ok) {
@@ -141,7 +121,7 @@ function getPublicWishesFilter() {
   return {
     filter: {
       visibility: { _eq: 'public' },
-      // Si usas status de Directus para publicados, descomenta:
+      // Si usas status de Directus:
       // status: { _eq: 'published' },
     },
   };
@@ -151,10 +131,7 @@ function getPublicWishesFilter() {
 /** API de Dominio: Wishes */
 // =========================
 export const wishApi = {
-  // Lista de deseos (paginada)
-  async getWishes(params: WishesQueryParams = {}): Promise<ApiResponse<Wish>> {
-    console.log('Intentando obtener deseos con params:', params);
-
+  async getWishes(params: Record<string, any> = {}) {
     const mergedParams = {
       sort: params.sort ?? '-id',
       limit: params.limit ?? 12,
@@ -162,64 +139,19 @@ export const wishApi = {
       ...getPublicWishesFilter(),
       ...params,
     };
-
-    console.log('Params finales para obtener deseos:', mergedParams);
-    return api<Wish>('/items/wishes', { method: 'GET', params: mergedParams });
+    return api('/items/wishes', { method: 'GET', params: mergedParams });
   },
 
-  // Detalle por ID
-  async getWishById(id: string | number): Promise<ApiResponse<Wish>> {
+  async getWishById(id: string | number) {
     if (!id && id !== 0) throw new Error('getWishById: id requerido');
-    return api<Wish>(`/items/wishes/${id}`, { method: 'GET' });
+    return api(`/items/wishes/${id}`, { method: 'GET' });
   },
 };
 
-// =========================
-/** API de Dominio: Events (si la usas) */
-// =========================
-export const eventsApi = {
-  async getEvents(params: EventsQueryParams = {}): Promise<ApiResponse<Event>> {
-    const mergedParams = {
-      sort: params.sort ?? '-date',
-      limit: params.limit ?? 12,
-      offset: params.offset ?? 0,
-      ...params,
-    };
-    return api<Event>('/items/events', { method: 'GET', params: mergedParams });
-  },
-};
+// Helpers públicos
+export function getBaseUrl() {
+  return DIRECTUS_URL;
+}
 
-// =========================
-/** API de Dominio: Gifts (si la usas) */
-// =========================
-export const giftsApi = {
-  async getGifts(params: GiftsQueryParams = {}): Promise<ApiResponse<Gift>> {
-    const mergedParams = {
-      sort: params.sort ?? '-id',
-      limit: params.limit ?? 12,
-      offset: params.offset ?? 0,
-      ...params,
-    };
-    return api<Gift>('/items/gifts', { method: 'GET', params: mergedParams });
-  },
-};
-
-// =========================
-/** Helpers Admin / Debug */
-// =========================
-export const adminApi = {
-  async listCollections() {
-    const response = await api('/collections', {
-      method: 'GET',
-      params: {
-        fields: 'collection,meta.icon',
-        limit: -1,
-      },
-    });
-    console.log('Respuesta de colecciones:', response);
-    return response as ApiResponse<any>;
-  },
-};
-
-// Export de tipos por conveniencia
-export type { Wish, Event, Gift, UserInfo };
+// Tipos de respuesta (opcional re-export)
+export type { ApiResponse };
