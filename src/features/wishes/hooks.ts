@@ -1,225 +1,165 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { wishApi, getCurrentUser, collectionsApi } from '../../lib/directus'
-import type { Wish, Event, Gift, UserInfo } from './types'
+// src/features/wishes/hooks.ts
+import { useQuery, useInfiniteQuery, QueryKey } from '@tanstack/react-query';
+import { wishApi } from '@/lib/directus';
+import type { Wish } from './types';
 
-// Hook para obtener colecciones
-export const useCollections = () => {
-  return useQuery<any[]>({
-    queryKey: ['collections'],
+/**
+ * Claves base para cache de React Query
+ */
+const WISHES_KEY = ['wishes'] as const;
+const WISH_KEY = ['wish'] as const;
+
+/**
+ * Tipos de opciones de consulta
+ */
+type UseWishesOptions = {
+  limit?: number;
+  offset?: number;
+  visibility?: 'public' | 'private';
+  sort?: string; // ejemplo: '-id'
+  enabled?: boolean;
+  // Puedes agregar más filtros si hace falta (status, etc.)
+};
+
+type UseInfiniteWishesOptions = {
+  pageSize?: number;
+  visibility?: 'public' | 'private';
+  sort?: string; // ejemplo: '-id'
+  enabled?: boolean;
+};
+
+/**
+ * Hook: Lista de deseos (paginación clásica con limit/offset)
+ * Retorna data (Wish[]), meta y mantiene el ApiResponse original en raw
+ */
+export function useWishes(opts: UseWishesOptions = {}) {
+  const {
+    limit = 12,
+    offset = 0,
+    visibility = 'public',
+    sort = '-id',
+    enabled = true,
+  } = opts;
+
+  const key: QueryKey = [...WISHES_KEY, { limit, offset, visibility, sort }];
+
+  return useQuery({
+    queryKey: key,
+    enabled,
     queryFn: async () => {
-      console.log('Intentando obtener colecciones...')
-      const response = await collectionsApi.getCollections()
-      console.log('Respuesta de colecciones:', response)
-      return response.data || []
+      // Nota: wishApi.getWishes ya aplica por defecto visibility=public (mergeado),
+      // acá igualmente lo explicitamos para claridad/override.
+      const res = await wishApi.getWishes({
+        limit,
+        offset,
+        sort,
+        visibility,
+      } as any);
+      return res;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutos
-    retry: (failureCount, error) => {
-      console.error(`Error fetching collections (attempt ${failureCount + 1}):`, error)
-      return failureCount < 2 // Retry up to 2 times
+    select: (res) => {
+      const list = Array.isArray(res.data) ? (res.data as Wish[]) : [];
+      return {
+        list,
+        meta: res.meta ?? {},
+        raw: res,
+      };
     },
-  })
+    staleTime: 30_000, // 30s de frescura
+    gcTime: 5 * 60_000, // 5 min en cache
+    retry: 2,
+  });
 }
 
-// Hook para obtener la información del usuario actual
-export const useCurrentUser = () => {
-  return useQuery<UserInfo | null>({
-    queryKey: ['currentUser'],
+/**
+ * Hook: Lista infinita de deseos (para “Load more” / infinite scroll)
+ * Usa offset basado en pageParam
+ */
+export function useInfiniteWishes(opts: UseInfiniteWishesOptions = {}) {
+  const {
+    pageSize = 12,
+    visibility = 'public',
+    sort = '-id',
+    enabled = true,
+  } = opts;
+
+  const key: QueryKey = [...WISHES_KEY, 'infinite', { pageSize, visibility, sort }];
+
+  return useInfiniteQuery({
+    queryKey: key,
+    enabled,
+    /**
+     * pageParam será el offset (inicia en 0)
+     */
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const offset = Number(pageParam) || 0;
+      const res = await wishApi.getWishes({
+        limit: pageSize,
+        offset,
+        sort,
+        visibility,
+      } as any);
+      return { ...res, __offset: offset };
+    },
+    getNextPageParam: (lastPage) => {
+      // Si el servidor devuelve meta.count / meta.total, podemos calcular el siguiente offset.
+      // Fallback simple: si devolvió menos que pageSize, no hay más páginas.
+      const items = Array.isArray(lastPage.data) ? lastPage.data : [];
+      if (items.length < pageSize) return undefined; // no hay más
+      const nextOffset = (lastPage as any).__offset + pageSize;
+      return nextOffset;
+    },
+    select: (data) => {
+      // Aplana todas las páginas en una sola lista de Wish
+      const pages = data.pages ?? [];
+      const list = pages.flatMap((p) => (Array.isArray(p.data) ? (p.data as Wish[]) : []));
+      return {
+        list,
+        pages,
+        pageParams: data.pageParams,
+      };
+    },
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    retry: 2,
+  });
+}
+
+/**
+ * Hook: Detalle de un deseo por ID
+ */
+export function useWish(id?: string | number, enabled: boolean = true) {
+  const key: QueryKey = [...WISH_KEY, { id }];
+
+  return useQuery({
+    queryKey: key,
+    enabled: enabled && Boolean(id),
     queryFn: async () => {
-      try {
-        console.log('Intentando obtener usuario actual...')
-        const user = await getCurrentUser()
-        console.log('Usuario obtenido:', user)
-        return user
-      } catch (error) {
-        console.error('Error getting current user:', error)
-        return null
-      }
+      if (id === undefined || id === null) throw new Error('useWish: id es requerido');
+      const res = await wishApi.getWishById(id);
+      return res;
     },
-    retry: false,
-  })
+    select: (res) => {
+      // El detalle viene como objeto en data (no array)
+      const item = (!Array.isArray(res.data) ? (res.data as Wish) : null) as Wish | null;
+      return {
+        item,
+        raw: res,
+      };
+    },
+    staleTime: 30_000,
+    gcTime: 5 * 60_000,
+    retry: 2,
+  });
 }
 
-// Hook para obtener la lista de deseos
-export const useWishes = (params: {
-  search?: string
-  status?: string
-  limit?: number
-  offset?: number
-} = {}) => {
-  return useQuery<Wish[]>({
-    queryKey: ['wishes', params],
-    queryFn: async () => {
-      console.log('Intentando obtener deseos con params:', params)
-      const response = await wishApi.getWishes(params)
-      console.log('Respuesta de Directus:', response)
-      return response.data || []
-    },
-    staleTime: 1000 * 60 * 5, // 5 minutos
-    retry: (failureCount, error) => {
-      console.error(`Error fetching wishes (attempt ${failureCount + 1}):`, error)
-      return failureCount < 2 // Retry up to 2 times
-    },
-  })
-}
-
-// Hook para obtener un deseo específico
-export const useWish = (id: number) => {
-  return useQuery<Wish>({
-    queryKey: ['wish', id],
-    queryFn: async () => {
-      console.log(`Intentando obtener deseo con id: ${id}`)
-      const response = await wishApi.getWish(id)
-      console.log(`Respuesta de Directus para deseo ${id}:`, response)
-      return response.data
-    },
-    enabled: !!id,
-    staleTime: 1000 * 60 * 5, // 5 minutos
-    retry: (failureCount, error) => {
-      console.error(`Error fetching wish ${id} (attempt ${failureCount + 1}):`, error)
-      return failureCount < 2 // Retry up to 2 times
-    },
-  })
-}
-
-// Hook para obtener eventos de un deseo
-export const useWishEvents = (wishId: number) => {
-  return useQuery<Event[]>({
-    queryKey: ['wishEvents', wishId],
-    queryFn: async () => {
-      console.log(`Intentando obtener eventos para deseo: ${wishId}`)
-      const response = await wishApi.getEvents(wishId)
-      console.log(`Respuesta de Directus para eventos ${wishId}:`, response)
-      return response.data || []
-    },
-    enabled: !!wishId,
-    staleTime: 1000 * 60 * 5, // 5 minutos
-    retry: (failureCount, error) => {
-      console.error(`Error fetching wish events ${wishId} (attempt ${failureCount + 1}):`, error)
-      return failureCount < 2 // Retry up to 2 times
-    },
-  })
-}
-
-// Hook para obtener regalos de un deseo
-export const useWishGifts = (wishId: number) => {
-  return useQuery<Gift[]>({
-    queryKey: ['wishGifts', wishId],
-    queryFn: async () => {
-      console.log(`Intentando obtener regalos para deseo: ${wishId}`)
-      const response = await wishApi.getGifts(wishId)
-      console.log(`Respuesta de Directus para regalos ${wishId}:`, response)
-      return response.data || []
-    },
-    enabled: !!wishId,
-    staleTime: 1000 * 60 * 5, // 5 minutos
-    retry: (failureCount, error) => {
-      console.error(`Error fetching wish gifts ${wishId} (attempt ${failureCount + 1}):`, error)
-      return failureCount < 2 // Retry up to 2 times
-    },
-  })
-}
-
-// Hook para crear un deseo
-export const useCreateWish = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async (_wishData: Partial<Wish>) => {
-      return await wishApi.createWish(_wishData)
-    },
-    onSuccess: () => {
-      // Invalidar la caché de deseos para refrescar la lista
-      queryClient.invalidateQueries({ queryKey: ['wishes'] })
-    },
-  })
-}
-
-// Hook para actualizar un deseo
-export const useUpdateWish = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async ({ id, ..._wishData }: Partial<Wish> & { id: number }) => {
-      // Esta función se implementará cuando se agregue el endpoint de actualización
-      throw new Error('Update wish not implemented yet')
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishes'] })
-    },
-  })
-}
-
-// Hook para eliminar un deseo
-export const useDeleteWish = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async (id: number) => {
-      // Esta función se implementará cuando se agregue el endpoint de eliminación
-      throw new Error('Delete wish not implemented yet')
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishes'] })
-    },
-  })
-}
-
-// Hook para crear un evento
-export const useCreateEvent = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async (_eventData: Partial<Event>) => {
-      // Esta función se implementará cuando se agregue el endpoint de creación
-      throw new Error('Create event not implemented yet')
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishEvents'] })
-    },
-  })
-}
-
-// Hook para crear un regalo
-export const useCreateGift = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async (_giftData: Partial<Gift>) => {
-      // Esta función se implementará cuando se agregue el endpoint de creación
-      throw new Error('Create gift not implemented yet')
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishGifts'] })
-    },
-  })
-}
-
-// Hook para actualizar un regalo
-export const useUpdateGift = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async ({ id, ..._giftData }: Partial<Gift> & { id: number }) => {
-      // Esta función se implementará cuando se agregue el endpoint de actualización
-      throw new Error('Update gift not implemented yet')
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishGifts'] })
-    },
-  })
-}
-
-// Hook para eliminar un regalo
-export const useDeleteGift = () => {
-  const queryClient = useQueryClient()
-  
-  return useMutation({
-    mutationFn: async (_id: number) => {
-      // Esta función se implementará cuando se agregue el endpoint de eliminación
-      throw new Error('Delete gift not implemented yet')
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['wishGifts'] })
-    },
-  })
-}
+/**
+ * Exports útiles por si querés invalidar desde componentes externos:
+ */
+export const wishesKeys = {
+  all: WISHES_KEY,
+  list: (p?: UseWishesOptions) => [...WISHES_KEY, p ?? {}] as const,
+  infinite: (p?: UseInfiniteWishesOptions) => [...WISHES_KEY, 'infinite', p ?? {}] as const,
+  detail: (id: string | number) => [...WISH_KEY, { id }] as const,
+};

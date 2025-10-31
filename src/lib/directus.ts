@@ -1,246 +1,225 @@
-import type { 
+// src/lib/directus.ts
+// Cliente centralizado para consumir Directus con URLs ABSOLUTAS (nunca relativas)
+
+import type {
   WishesQueryParams,
   EventsQueryParams,
   GiftsQueryParams,
   UserInfo,
   Wish,
   Event,
-  Gift
+  Gift,
 } from '../features/wishes/types';
 
-// Environment variables - Vite usa import.meta.env
-const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'https://hoztlat-regalos.6vlrrp.easypanel.host';
-const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN || '8CzN175Z3ibcoDZQRnD3v86AkZAcoaeh';
+// =========================
+// Environment (Vite build-time)
+// =========================
+const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL;
+const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN; // opcional
 
+if (!DIRECTUS_URL) {
+  // Rompemos en build/runtime si falta, para que no vuelva a caer en window.location.origin
+  throw new Error('VITE_DIRECTUS_URL is not defined at build time');
+}
+
+// Debug inicial
 console.log('🔗 Configuración Directus:', {
   DIRECTUS_URL,
-  DIRECTUS_TOKEN: DIRECTUS_TOKEN ? '***' : 'No configurado'
+  hasToken: Boolean(DIRECTUS_TOKEN),
 });
 
-// API response types
-interface ApiResponse<T> {
-  data: T[];
-  meta?: {
-    total_count: number;
+// =========================
+// Utils
+// =========================
+type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
+
+type ApiOptions = {
+  method?: HttpMethod;
+  params?: Record<string, any>;
+  body?: any;
+  headers?: Record<string, string>;
+};
+
+type ApiResponse<T = any> = {
+  data: T | T[];
+  meta?: any;
+  errors?: any[];
+};
+
+function toQuery(params?: Record<string, any>) {
+  const qs = new URLSearchParams();
+  if (!params) return '';
+
+  const append = (key: string, value: any) => {
+    if (value === undefined || value === null) return;
+    qs.append(key, String(value));
   };
+
+  // Admite objetos como filter[visibility][_eq]=public etc.
+  for (const [key, value] of Object.entries(params)) {
+    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+      // anidado simple (e.g., filter: { visibility: { _eq: 'public' } })
+      // Directus espera filter[visibility][_eq]=public
+      if (key === 'filter') {
+        for (const [fKey, fVal] of Object.entries(value as Record<string, any>)) {
+          if (typeof fVal === 'object' && fVal !== null) {
+            for (const [opKey, opVal] of Object.entries(fVal as Record<string, any>)) {
+              append(`filter[${fKey}][${opKey}]`, opVal);
+            }
+          } else {
+            append(`filter[${fKey}]`, fVal);
+          }
+        }
+      } else {
+        // otros objetos, lo aplanamos en JSON por simplicidad
+        append(key, JSON.stringify(value));
+      }
+    } else if (Array.isArray(value)) {
+      // múltiples valores (e.g., fields=*,relacion.*)
+      value.forEach((v) => append(key, v));
+    } else {
+      append(key, value);
+    }
+  }
+
+  const s = qs.toString();
+  return s ? `?${s}` : '';
 }
 
-interface ApiItemResponse<T> {
-  data: T;
+function absoluteUrl(path: string, params?: Record<string, any>) {
+  // Garantiza que SIEMPRE apuntemos al host de Directus
+  const base = DIRECTUS_URL.replace(/\/+$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${cleanPath}${toQuery(params)}`;
 }
 
-// Helper function to add authentication headers
-const getAuthHeaders = (_method: string = 'GET') => {
-  const headers: Record<string, string> = {
-    'Accept': 'application/json',
+async function api<T = any>(path: string, opts: ApiOptions = {}): Promise<ApiResponse<T>> {
+  const { method = 'GET', params, body, headers = {} } = opts;
+  const url = absoluteUrl(path, params);
+
+  const finalHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
+    ...headers,
   };
-  
-  if (DIRECTUS_TOKEN && DIRECTUS_TOKEN.trim()) {
-    headers['Authorization'] = `Bearer ${DIRECTUS_TOKEN.trim()}`;
+  if (DIRECTUS_TOKEN && !finalHeaders.Authorization) {
+    finalHeaders.Authorization = `Bearer ${DIRECTUS_TOKEN}`;
   }
-  
-  return headers;
-};
 
-// API helper function
-export const api = async <T>(
-  path: string, 
-  options: {
-    method?: string;
-    body?: any;
-    params?: Record<string, any>;
-  } = {}
-): Promise<ApiResponse<T> | ApiItemResponse<T>> => {
+  console.log('📡 Llamando a API:', method, path, params || {});
+  console.log('🌐 URL completa:', url);
+  console.log('🧾 Headers:', {
+    ...finalHeaders,
+    ...(finalHeaders.Authorization ? { Authorization: '[REDACTED]' } : {}),
+  });
+
+  const res = await fetch(url, {
+    method,
+    headers: finalHeaders,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  const text = await res.text();
+  let json: ApiResponse<T> | null = null;
   try {
-    const { method = 'GET', body, params = {} } = options;
-    
-    console.log(`Llamando a API: ${method} ${path}`, { params, body });
-    
-    // Asegurarse de que la URL no esté vacía
-    if (!DIRECTUS_URL) {
-      throw new Error('DIRECTUS_URL no está configurada');
-    }
-    
-    const url = new URL(DIRECTUS_URL.replace(/\/$/, '') + path);
-    
-    // Add query parameters
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        url.searchParams.set(key, String(value));
-      }
-    });
-    
-    const fetchOptions: RequestInit = {
-      method,
-      headers: getAuthHeaders(method),
-    };
-    
-    if (body && (method === 'POST' || method === 'PATCH' || method === 'PUT')) {
-      fetchOptions.body = JSON.stringify(body);
-    }
-    
-    console.log('URL completa:', url.toString());
-    console.log('Headers:', fetchOptions.headers);
-    
-    const response = await fetch(url.toString(), fetchOptions);
-    
-    console.log(`Respuesta HTTP: ${response.status} ${response.statusText}`);
-    
-    if (!response.ok) {
-      if (response.status === 401 || response.status === 403) {
-        throw new Error(`No autorizado. Verifica tu token o permisos. Status: ${response.status}`);
-      }
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const responseData = await response.json();
-    console.log('Respuesta JSON:', responseData);
-    
-    return responseData;
-  } catch (error) {
-    console.error('Directus API Error:', error);
-    throw error;
+    json = text ? (JSON.parse(text) as ApiResponse<T>) : ({} as ApiResponse<T>);
+  } catch {
+    // si no es JSON, cae abajo
   }
-};
 
-// Public wishes filter (when no token is provided)
-export const getPublicWishesFilter = () => {
+  if (!res.ok) {
+    console.error('❌ HTTP Error:', res.status, text || json);
+    throw new Error(`HTTP ${res.status}: ${text || JSON.stringify(json)}`);
+  }
+
+  return (json || { data: null }) as ApiResponse<T>;
+}
+
+// =========================
+// Filtros comunes
+// =========================
+function getPublicWishesFilter() {
   return {
-    'filter[visibility][_eq]': 'public'
+    filter: {
+      visibility: { _eq: 'public' },
+      // Si usas status de Directus para publicados, descomenta:
+      // status: { _eq: 'published' },
+    },
   };
-};
+}
 
-// User info endpoint
-export const getCurrentUser = async (): Promise<UserInfo | null> => {
-  try {
-    if (!DIRECTUS_TOKEN || !DIRECTUS_TOKEN.trim()) {
-      console.log('No hay token configurado, no se puede obtener usuario');
-      return null;
-    }
-    
-    console.log('Intentando obtener usuario actual...');
-    const response = await api<{ data: UserInfo }>('/users/me', { method: 'GET' });
-    console.log('Usuario obtenido:', (response as any).data);
-    return (response as any).data;
-  } catch (error) {
-    console.error('Error getting current user:', error);
-    return null;
-  }
-};
-
-// API endpoints
+// =========================
+/** API de Dominio: Wishes */
+// =========================
 export const wishApi = {
-  // List wishes with pagination and filters
-  getWishes: async (params: WishesQueryParams = {}): Promise<ApiResponse<Wish>> => {
-    console.log('Obteniendo lista de deseos con params:', params);
-    
-    const defaultParams = {
-      sort: '-id',
-      limit: 12,
-      offset: 0,
+  // Lista de deseos (paginada)
+  async getWishes(params: WishesQueryParams = {}): Promise<ApiResponse<Wish>> {
+    console.log('Intentando obtener deseos con params:', params);
+
+    const mergedParams = {
+      sort: params.sort ?? '-id',
+      limit: params.limit ?? 12,
+      offset: params.offset ?? 0,
       ...getPublicWishesFilter(),
       ...params,
     };
-    
-    // Add search functionality
-    if (params.search) {
-      (defaultParams as any)['_or[0][title][_icontains]'] = params.search;
-      (defaultParams as any)['_or[1][description][_icontains]'] = params.search;
-    }
-    
-    console.log('Params finales para obtener deseos:', defaultParams);
-    
-    const response = await api<Wish>('/items/wishes', {
-      method: 'GET',
-      params: defaultParams
-    });
-    
-    console.log('Respuesta de deseos:', response);
-    return response as ApiResponse<Wish>;
+
+    console.log('Params finales para obtener deseos:', mergedParams);
+    return api<Wish>('/items/wishes', { method: 'GET', params: mergedParams });
   },
-  
-  // Get single wish
-  getWish: async (id: number): Promise<ApiItemResponse<Wish>> => {
-    console.log(`Obteniendo deseo con id: ${id}`);
-    
-    const response = await api<Wish>(`/items/wishes/${id}`, {
-      method: 'GET',
-      params: {}
-    });
-    
-    console.log(`Respuesta de deseo ${id}:`, response);
-    return response as ApiItemResponse<Wish>;
-  },
-  
-  // Get events for a wish
-  getEvents: async (wishId: number, params: EventsQueryParams = {}): Promise<ApiResponse<Event>> => {
-    console.log(`Obteniendo eventos para deseo: ${wishId}`, params);
-    
-    const response = await api<Event>('/items/events', {
-      method: 'GET',
-      params: {
-        'filter[wish][_eq]': wishId,
-        sort: '-date',
-        limit: 20,
-        ...params,
-      }
-    });
-    
-    console.log(`Respuesta de eventos ${wishId}:`, response);
-    return response as ApiResponse<Event>;
-  },
-  
-  // Get gifts for a wish
-  getGifts: async (wishId: number, params: GiftsQueryParams = {}): Promise<ApiResponse<Gift>> => {
-    console.log(`Obteniendo regalos para deseo: ${wishId}`, params);
-    
-    const response = await api<Gift>('/items/gifts', {
-      method: 'GET',
-      params: {
-        'filter[wish][_eq]': wishId,
-        sort: '-id',
-        limit: 20,
-        ...params,
-      }
-    });
-    
-    console.log(`Respuesta de regalos ${wishId}:`, response);
-    return response as ApiResponse<Gift>;
-  },
-  
-  // Create wish (prepared for future use)
-  createWish: async (wishData: Partial<Wish>): Promise<ApiItemResponse<Wish>> => {
-    if (!DIRECTUS_TOKEN || !DIRECTUS_TOKEN.trim()) {
-      throw new Error('Authentication required to create wishes');
-    }
-    
-    const response = await api<Wish>('/items/wishes', {
-      method: 'POST',
-      body: wishData
-    });
-    return response as ApiItemResponse<Wish>;
+
+  // Detalle por ID
+  async getWishById(id: string | number): Promise<ApiResponse<Wish>> {
+    if (!id && id !== 0) throw new Error('getWishById: id requerido');
+    return api<Wish>(`/items/wishes/${id}`, { method: 'GET' });
   },
 };
 
-// Collections API
-export const collectionsApi = {
-  // List collections
-  getCollections: async () => {
-    console.log('Obteniendo lista de colecciones...');
-    
+// =========================
+/** API de Dominio: Events (si la usas) */
+// =========================
+export const eventsApi = {
+  async getEvents(params: EventsQueryParams = {}): Promise<ApiResponse<Event>> {
+    const mergedParams = {
+      sort: params.sort ?? '-date',
+      limit: params.limit ?? 12,
+      offset: params.offset ?? 0,
+      ...params,
+    };
+    return api<Event>('/items/events', { method: 'GET', params: mergedParams });
+  },
+};
+
+// =========================
+/** API de Dominio: Gifts (si la usas) */
+// =========================
+export const giftsApi = {
+  async getGifts(params: GiftsQueryParams = {}): Promise<ApiResponse<Gift>> {
+    const mergedParams = {
+      sort: params.sort ?? '-id',
+      limit: params.limit ?? 12,
+      offset: params.offset ?? 0,
+      ...params,
+    };
+    return api<Gift>('/items/gifts', { method: 'GET', params: mergedParams });
+  },
+};
+
+// =========================
+/** Helpers Admin / Debug */
+// =========================
+export const adminApi = {
+  async listCollections() {
     const response = await api('/collections', {
       method: 'GET',
       params: {
         fields: 'collection,meta.icon',
-        limit: -1
-      }
+        limit: -1,
+      },
     });
-    
     console.log('Respuesta de colecciones:', response);
     return response as ApiResponse<any>;
   },
 };
 
-// Export types for convenience
-export type { Wish, Event, Gift };
+// Export de tipos por conveniencia
+export type { Wish, Event, Gift, UserInfo };
