@@ -1,20 +1,19 @@
 // src/lib/directus.ts
-// Cliente centralizado Directus con URLs ABSOLUTAS (nunca relativas).
-// Soluciona "possibly undefined" para TypeScript y expone getBaseUrl(): string.
+// Cliente centralizado para Directus con URLs ABSOLUTAS y helpers estrictos.
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
 type ApiOptions = {
   method?: HttpMethod;
-  params?: Record<string, any>;
-  body?: any;
+  params?: Record<string, unknown>;
+  body?: unknown;
   headers?: Record<string, string>;
 };
 
-export type ApiResponse<T = any> = {
+export type ApiResponse<T = unknown> = {
   data: T | T[];
-  meta?: any;
-  errors?: any[];
+  meta?: unknown;
+  errors?: unknown[];
 };
 
 // =========================
@@ -24,15 +23,12 @@ const RAW_URL = import.meta.env.VITE_DIRECTUS_URL as string | undefined;
 const RAW_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as string | undefined;
 
 if (!RAW_URL || RAW_URL.trim() === '') {
-  // Cortamos en build/runtime si falta, para evitar fallback a window.location.origin
   throw new Error('VITE_DIRECTUS_URL is not defined at build time');
 }
 
-// A partir de aquí, Directus URL es string seguro
 const DIRECTUS_URL: string = RAW_URL.trim();
 const DIRECTUS_TOKEN: string | undefined = RAW_TOKEN?.trim();
 
-// Debug controlado
 console.log('🔗 Configuración Directus:', {
   DIRECTUS_URL,
   hasToken: Boolean(DIRECTUS_TOKEN),
@@ -41,21 +37,25 @@ console.log('🔗 Configuración Directus:', {
 // =========================
 // Utils
 // =========================
-function toQuery(params?: Record<string, any>) {
+function toQuery(params?: Record<string, unknown>): string {
   const qs = new URLSearchParams();
   if (!params) return '';
 
-  const append = (key: string, value: any) => {
+  const append = (key: string, value: unknown) => {
     if (value === undefined || value === null) return;
     qs.append(key, String(value));
   };
 
   for (const [key, value] of Object.entries(params)) {
-    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    if (Array.isArray(value)) {
+      value.forEach((v) => append(key, v));
+      continue;
+    }
+    if (typeof value === 'object' && value !== null) {
       if (key === 'filter') {
-        for (const [fKey, fVal] of Object.entries(value as Record<string, any>)) {
+        for (const [fKey, fVal] of Object.entries(value as Record<string, unknown>)) {
           if (typeof fVal === 'object' && fVal !== null) {
-            for (const [opKey, opVal] of Object.entries(fVal as Record<string, any>)) {
+            for (const [opKey, opVal] of Object.entries(fVal as Record<string, unknown>)) {
               append(`filter[${fKey}][${opKey}]`, opVal);
             }
           } else {
@@ -63,27 +63,25 @@ function toQuery(params?: Record<string, any>) {
           }
         }
       } else {
+        // Cualquier otro objeto lo serializamos
         append(key, JSON.stringify(value));
       }
-    } else if (Array.isArray(value)) {
-      value.forEach((v) => append(key, v));
-    } else {
-      append(key, value);
+      continue;
     }
+    append(key, value);
   }
 
   const s = qs.toString();
   return s ? `?${s}` : '';
 }
 
-function absoluteUrl(path: string, params?: Record<string, any>) {
-  // DIRECTUS_URL es string garantizado (ver guard arriba)
+function absoluteUrl(path: string, params?: Record<string, unknown>): string {
   const base = DIRECTUS_URL.replace(/\/+$/, '');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${base}${cleanPath}${toQuery(params)}`;
 }
 
-async function api<T = any>(path: string, opts: ApiOptions = {}): Promise<ApiResponse<T>> {
+async function api<T = unknown>(path: string, opts: ApiOptions = {}): Promise<ApiResponse<T>> {
   const { method = 'GET', params, body, headers = {} } = opts;
   const url = absoluteUrl(path, params);
 
@@ -109,7 +107,7 @@ async function api<T = any>(path: string, opts: ApiOptions = {}): Promise<ApiRes
   try {
     json = text ? (JSON.parse(text) as ApiResponse<T>) : ({} as ApiResponse<T>);
   } catch {
-    /* ignore non-JSON */
+    // respuesta no-JSON
   }
 
   if (!res.ok) {
@@ -127,14 +125,36 @@ function getPublicWishesFilter() {
   return {
     filter: {
       visibility: { _eq: 'public' },
-      // Si usas status de Directus para publicados:
+      // Si usas status publicados en Directus:
       // status: { _eq: 'published' },
     },
   };
 }
 
 // =========================
-/** API de Dominio: Wishes */
+// API de Dominio: Wishes
 // =========================
 export const wishApi = {
-  async getWishes(params: Record<stri
+  async getWishes(params: Record<string, unknown> = {}) {
+    const mergedParams = {
+      sort: (params as any).sort ?? '-id',
+      limit: (params as any).limit ?? 12,
+      offset: (params as any).offset ?? 0,
+      ...getPublicWishesFilter(),
+      ...params,
+    };
+    return api('/items/wishes', { method: 'GET', params: mergedParams });
+  },
+
+  async getWishById(id: string | number) {
+    if (!id && id !== 0) throw new Error('getWishById: id requerido');
+    return api(`/items/wishes/${id}`, { method: 'GET' });
+  },
+};
+
+// =========================
+// Helper público
+// =========================
+export function getBaseUrl(): string {
+  return DIRECTUS_URL;
+}
