@@ -7,12 +7,22 @@ Para que la aplicación se conecte correctamente a Directus en producción, nece
 ### Variables Requeridas
 - `VITE_DIRECTUS_URL`: URL de tu instancia de Directus
 - `VITE_DIRECTUS_TOKEN`: Token de autenticación de Directus
+- `VITE_APP_VERSION`: Versión de la aplicación (opcional)
+- `VITE_BUILD_TIME`: Fecha y hora del build (opcional)
+- `VITE_GIT_COMMIT`: Hash del commit (opcional)
 
 ### Valores Correctos
 ```
 VITE_DIRECTUS_URL=https://hoztlat-regalos.6vlrrp.easypanel.host
 VITE_DIRECTUS_TOKEN=8CzN175Z3ibcoDZQRnD3v86AkZAcoaeh
+VITE_APP_VERSION=1.0.X
+VITE_BUILD_TIME=2024-XX-XX XX:XX:XX
+VITE_GIT_COMMIT=abcdef1234567890
 ```
+
+### URLs de Despliegue
+- **Frontend**: `https://hoztlat-deseandola.6vlrrp.easypanel.host/`
+- **Backend/Directus**: `https://hoztlat-regalos.6vlrrp.easypanel.host`
 
 ## Despliegue con GitHub Actions
 
@@ -34,6 +44,9 @@ El workflow en `.github/workflows/docker.yml` se ejecutará automáticamente cua
 ```bash
 VITE_DIRECTUS_URL=https://hoztlat-regalos.6vlrrp.easypanel.host
 VITE_DIRECTUS_TOKEN=8CzN175Z3ibcoDZQRnD3v86AkZAcoaeh
+VITE_APP_VERSION=1.0.0
+VITE_BUILD_TIME=$(date '+%Y-%m-%d %H:%M:%S')
+VITE_GIT_COMMIT=local
 ```
 
 2. Ejecuta:
@@ -46,6 +59,9 @@ docker-compose up --build
 docker build \
   --build-arg VITE_DIRECTUS_URL=https://hoztlat-regalos.6vlrrp.easypanel.host \
   --build-arg VITE_DIRECTUS_TOKEN=8CzN175Z3ibcoDZQRnD3v86AkZAcoaeh \
+  --build-arg VITE_APP_VERSION=1.0.0 \
+  --build-arg VITE_BUILD_TIME="$(date '+%Y-%m-%d %H:%M:%S')" \
+  --build-arg VITE_GIT_COMMIT=local \
   -t deseandola .
 
 docker run -p 3000:80 deseandola
@@ -80,4 +96,8 @@ Una vez desplegado, verifica que:
 ## Importante
 - Nunca expongas el token de Directus en el cliente
 - Las variables de entorno deben configurarse en el entorno de producción, no hardcodearse
-- La URL correcta es siempre `hoztlat-regalos.6vlrrp.easypanel.host`
+- **Frontend URL**: `https://hoztlat-deseandola.6vlrrp.easypanel.host/`
+- **Backend URL**: `https://hoztlat-regalos.6vlrrp.easypanel.host`
+- El footer mostrará ambas URLs para referencia clara
+- El footer mostrará información de versión, build y commit para verificar despliegues
+- Cada vez que actualices en EasyPanel, verás nueva información en el footer
