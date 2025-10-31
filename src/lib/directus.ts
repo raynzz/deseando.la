@@ -228,5 +228,24 @@ export const wishApi = {
   },
 };
 
+// Collections API
+export const collectionsApi = {
+  // List collections
+  getCollections: async () => {
+    console.log('Obteniendo lista de colecciones...');
+    
+    const response = await api('/collections', {
+      method: 'GET',
+      params: {
+        fields: 'collection,meta.icon',
+        limit: -1
+      }
+    });
+    
+    console.log('Respuesta de colecciones:', response);
+    return response as ApiResponse<any>;
+  },
+};
+
 // Export types for convenience
 export type { Wish, Event, Gift };

@@ -1,6 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { wishApi, getCurrentUser } from '../../lib/directus'
+import { wishApi, getCurrentUser, collectionsApi } from '../../lib/directus'
 import type { Wish, Event, Gift, UserInfo } from './types'
+
+// Hook para obtener colecciones
+export const useCollections = () => {
+  return useQuery<any[]>({
+    queryKey: ['collections'],
+    queryFn: async () => {
+      console.log('Intentando obtener colecciones...')
+      const response = await collectionsApi.getCollections()
+      console.log('Respuesta de colecciones:', response)
+      return response.data || []
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    retry: (failureCount, error) => {
+      console.error(`Error fetching collections (attempt ${failureCount + 1}):`, error)
+      return failureCount < 2 // Retry up to 2 times
+    },
+  })
+}
 
 // Hook para obtener la información del usuario actual
 export const useCurrentUser = () => {
