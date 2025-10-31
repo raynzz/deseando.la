@@ -12,9 +12,9 @@ import type {
 const DIRECTUS_URL = import.meta.env.VITE_DIRECTUS_URL || 'https://hoztlat-regalos.6vlrrp.easypanel.host';
 const DIRECTUS_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN || '8CzN175Z3ibcoDZQRnD3v86AkZAcoaeh';
 
-console.log('Configuración Directus:', { 
-  DIRECTUS_URL, 
-  DIRECTUS_TOKEN: DIRECTUS_TOKEN ? '***' : 'No configurado' 
+console.log('🔗 Configuración Directus:', {
+  DIRECTUS_URL,
+  DIRECTUS_TOKEN: DIRECTUS_TOKEN ? '***' : 'No configurado'
 });
 
 // API response types

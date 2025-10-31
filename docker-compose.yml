@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  deseandola-frontend:
+    build:
+      context: .
+      args:
+        VITE_DIRECTUS_URL: ${VITE_DIRECTUS_URL:-https://hoztlat-regalos.6vlrrp.easypanel.host}
+        VITE_DIRECTUS_TOKEN: ${VITE_DIRECTUS_TOKEN:-8CzN175Z3ibcoDZQRnD3v86AkZAcoaeh}
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
