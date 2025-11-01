@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 const NAV_ITEMS = [
@@ -13,6 +13,38 @@ const MARQUEE_TEXT =
 
 const Navbar: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState('');
+
+  useEffect(() => {
+    // Verificar si hay un token de acceso en localStorage
+    const token = localStorage.getItem('directus_access_token');
+    if (token) {
+      setIsLoggedIn(true);
+      // Intentar obtener el nombre de usuario del token o localStorage
+      const userData = localStorage.getItem('directus_user');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          setUserName(user.first_name || user.email || 'Usuario');
+        } catch (e) {
+          console.error('Error parsing user data:', e);
+          setUserName('Usuario');
+        }
+      } else {
+        setUserName('Usuario');
+      }
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('directus_access_token');
+    localStorage.removeItem('directus_refresh_token');
+    localStorage.removeItem('directus_user');
+    setIsLoggedIn(false);
+    setUserName('');
+    window.location.href = '/';
+  };
 
   return (
     <>
@@ -68,18 +100,40 @@ const Navbar: React.FC = () => {
 
             {/* CTAs */}
             <div className="hidden items-center gap-3 md:flex">
-              <Link
-                to="/login"
-                className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
-              >
-                Iniciar sesión
-              </Link>
-              <Link
-                to="/create-wish"
-                className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
-              >
-                Crear deseo
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <span className="text-sm text-neutral-700">
+                    Bienvenido, <span className="font-medium">{userName}</span>
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+                  >
+                    Cerrar sesión
+                  </button>
+                  <Link
+                    to="/create-wish"
+                    className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
+                  >
+                    Crear deseo
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+                  >
+                    Iniciar sesión
+                  </Link>
+                  <Link
+                    to="/create-wish"
+                    className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
+                  >
+                    Crear deseo
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile Hamburger */}
@@ -127,20 +181,46 @@ const Navbar: React.FC = () => {
                   Admin
                 </Link>
                 <div className="mt-2 flex items-center gap-2">
-                  <Link
-                    to="/login"
-                    className="flex-1 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 text-center hover:bg-neutral-50"
-                    onClick={() => setOpen(false)}
-                  >
-                    Iniciar sesión
-                  </Link>
-                  <Link
-                    to="/create-wish"
-                    className="flex-1 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white text-center hover:bg-neutral-800"
-                    onClick={() => setOpen(false)}
-                  >
-                    Crear deseo
-                  </Link>
+                  {isLoggedIn ? (
+                    <>
+                      <span className="flex-1 text-center text-sm text-neutral-700">
+                        Bienvenido, <span className="font-medium">{userName}</span>
+                      </span>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setOpen(false);
+                        }}
+                        className="flex-1 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 text-center hover:bg-neutral-50"
+                      >
+                        Cerrar sesión
+                      </button>
+                      <Link
+                        to="/create-wish"
+                        className="flex-1 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white text-center hover:bg-neutral-800"
+                        onClick={() => setOpen(false)}
+                      >
+                        Crear deseo
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        to="/login"
+                        className="flex-1 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 text-center hover:bg-neutral-50"
+                        onClick={() => setOpen(false)}
+                      >
+                        Iniciar sesión
+                      </Link>
+                      <Link
+                        to="/create-wish"
+                        className="flex-1 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white text-center hover:bg-neutral-800"
+                        onClick={() => setOpen(false)}
+                      >
+                        Crear deseo
+                      </Link>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -154,7 +234,7 @@ const Navbar: React.FC = () => {
         .marquee-track {
           display: inline-block;
           will-change: transform;
-          animation: marqueeSlide 30s linear infinite;
+          animation: marqueeSlide 20s linear infinite;
         }
 
         /* Loop perfecto: repetimos el contenido y trasladamos -50% */
