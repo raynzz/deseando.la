@@ -471,26 +471,6 @@ export default function Home() {
 
   return (
     <main className="relative">
-      {/* Top bar simple */}
-      <div className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link to="/" className="font-semibold">Deseándola</Link>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowLogin(true)}
-              className="rounded-xl border px-3 py-1.5 text-sm hover:bg-black/5"
-            >
-              Entrar
-            </button>
-            <button
-              onClick={() => setShowSignup(true)}
-              className="rounded-xl bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800"
-            >
-              Crear cuenta
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-4 pb-12 pt-10">
@@ -606,15 +586,6 @@ export default function Home() {
         hasNextPage={hasNextPage}
         isFetchingNextPage={isFetchingNextPage}
         isFetching={isFetching}
-      />
-
-      {/* Modales */}
-      <SignupModal open={showSignup} onClose={() => setShowSignup(false)} />
-      <LoginModal
-        open={showLogin}
-        onClose={() => setShowLogin(false)}
-        baseUrl={baseUrl}
-        onLoggedIn={handleLoggedIn}
       />
     </main>
   );
