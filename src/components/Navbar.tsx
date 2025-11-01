@@ -72,15 +72,12 @@ const Navbar: React.FC = () => {
             <div className="hidden items-center gap-3 md:flex">
               {user ? (
                 <>
-                  <span className="text-sm text-neutral-700">
-                    ¡Hola, {user.first_name || user.email}!
-                  </span>
-                  <button
-                    onClick={logout}
-                    className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+                  <Link
+                    to="/dashboard"
+                    className="text-sm text-neutral-700 hover:text-neutral-900 transition-colors"
                   >
-                    Cerrar sesión
-                  </button>
+                    ¡Hola, {user.first_name || user.email}!
+                  </Link>
                   <Link
                     to="/create-wish"
                     className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
@@ -152,18 +149,13 @@ const Navbar: React.FC = () => {
                 </Link>
                 {user ? (
                   <div className="mt-2 flex flex-col gap-2">
-                    <div className="text-center text-sm text-neutral-700">
-                      ¡Hola, {user.first_name || user.email}!
-                    </div>
-                    <button
-                      onClick={() => {
-                        logout();
-                        setOpen(false);
-                      }}
-                      className="flex-1 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 text-center hover:bg-neutral-50"
+                    <Link
+                      to="/dashboard"
+                      className="text-center text-sm text-neutral-700 hover:text-neutral-900"
+                      onClick={() => setOpen(false)}
                     >
-                      Cerrar sesión
-                    </button>
+                      ¡Hola, {user.first_name || user.email}!
+                    </Link>
                     <Link
                       to="/create-wish"
                       className="flex-1 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white text-center hover:bg-neutral-800"
