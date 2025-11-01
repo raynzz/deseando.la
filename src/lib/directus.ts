@@ -1,5 +1,6 @@
 // src/lib/directus.ts
-// Cliente centralizado para Directus con URLs ABSOLUTAS y helpers estrictos.
+// Cliente centralizado para Directus con soporte de runtime config (window.__APP_CONFIG__)
+// y fallback a variables de Vite. Sin throws en build-time.
 
 type HttpMethod = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
@@ -17,32 +18,67 @@ export type ApiResponse<T = unknown> = {
 };
 
 // =========================
-// Environment (Vite build-time)
+// Runtime/Vite Config
 // =========================
-const RAW_URL = import.meta.env.VITE_DIRECTUS_URL as string | undefined;
-const RAW_TOKEN = import.meta.env.VITE_DIRECTUS_TOKEN as string | undefined;
-
-if (!RAW_URL || RAW_URL.trim() === '') {
-  throw new Error('VITE_DIRECTUS_URL is not defined at build time');
+declare global {
+  interface Window {
+    __APP_CONFIG__?: {
+      DIRECTUS_URL?: string;
+      DIRECTUS_TOKEN?: string; // opcional
+    };
+  }
 }
 
-const DIRECTUS_URL: string = RAW_URL.trim();
-const DIRECTUS_TOKEN: string | undefined = RAW_TOKEN?.trim();
+const TOKEN_KEY = 'directus_access_token'; // si guardás el access_token acá
+const REFRESH_KEY = 'directus_refresh_token'; // por si lo usás después
 
-console.log('🔗 Configuración Directus:', {
-  DIRECTUS_URL,
-  hasToken: Boolean(DIRECTUS_TOKEN),
-});
-
-// Verificar si la URL termina con /admin y quitarlo si es necesario
-let cleanDirectusUrl = DIRECTUS_URL;
-if (cleanDirectusUrl.endsWith('/admin')) {
-  cleanDirectusUrl = cleanDirectusUrl.slice(0, -6);
-  console.log('🔧 URL Directus corregida (quitando /admin):', cleanDirectusUrl);
+function readRuntimeUrl(): string | undefined {
+  return window.__APP_CONFIG__?.DIRECTUS_URL?.trim() || undefined;
+}
+function readRuntimeToken(): string | undefined {
+  return window.__APP_CONFIG__?.DIRECTUS_TOKEN?.trim() || undefined;
+}
+function readViteUrl(): string | undefined {
+  // Vite fallback
+  const v = (import.meta as any).env?.VITE_DIRECTUS_URL as string | undefined;
+  return v?.trim() || undefined;
+}
+function readViteToken(): string | undefined {
+  const v = (import.meta as any).env?.VITE_DIRECTUS_TOKEN as string | undefined;
+  return v?.trim() || undefined;
 }
 
-// Exportar la URL limpia para usarla en los componentes
-export { DIRECTUS_URL: cleanDirectusUrl };
+/** URL base limpia, prioriza runtime y luego Vite */
+export function getBaseUrl(): string {
+  const url = readRuntimeUrl() || readViteUrl();
+  if (!url) {
+    // Error en TIEMPO DE EJECUCIÓN (cuando se llame), no en build.
+    throw new Error('Directus URL no configurada. Definí DIRECTUS_URL en /config.js o VITE_DIRECTUS_URL.');
+  }
+  const cleaned = url.replace(/\/+$/, '');
+  return cleaned.endsWith('/admin') ? cleaned.slice(0, -6) : cleaned;
+}
+
+/** Token estático (si querés dejar uno por config). Preferís SIEMPRE token de sesión. */
+function getConfiguredStaticToken(): string | undefined {
+  return readRuntimeToken() || readViteToken();
+}
+
+/** Token de sesión (si hiciste login y guardaste el access_token) */
+function getSessionToken(): string | undefined {
+  try {
+    const t = localStorage.getItem(TOKEN_KEY);
+    return t || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Token final para Authorization: Bearer ... */
+function resolveAuthToken(): string | undefined {
+  // Prioriza token de sesión
+  return getSessionToken() || getConfiguredStaticToken();
+}
 
 // =========================
 // Utils
@@ -73,7 +109,6 @@ function toQuery(params?: Record<string, unknown>): string {
           }
         }
       } else {
-        // Cualquier otro objeto lo serializamos
         append(key, JSON.stringify(value));
       }
       continue;
@@ -86,7 +121,7 @@ function toQuery(params?: Record<string, unknown>): string {
 }
 
 function absoluteUrl(path: string, params?: Record<string, unknown>): string {
-  const base = cleanDirectusUrl.replace(/\/+$/, '');
+  const base = getBaseUrl();
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${base}${cleanPath}${toQuery(params)}`;
 }
@@ -99,17 +134,22 @@ async function api<T = unknown>(path: string, opts: ApiOptions = {}): Promise<Ap
     'Content-Type': 'application/json',
     ...headers,
   };
-  if (DIRECTUS_TOKEN && !finalHeaders.Authorization) {
-    finalHeaders.Authorization = `Bearer ${DIRECTUS_TOKEN}`;
+
+  const token = resolveAuthToken();
+  if (token && !finalHeaders.Authorization) {
+    finalHeaders.Authorization = `Bearer ${token}`;
   }
 
+  // Logs útiles en desarrollo
   console.log('📡 Llamando a API:', method, path, params || {});
   console.log('🌐 URL completa:', url);
+  if (token) console.log('🔑 Auth: Bearer (presente)');
 
   const res = await fetch(url, {
     method,
     headers: finalHeaders,
     body: body ? JSON.stringify(body) : undefined,
+    credentials: 'include', // si solo usás Bearer podrías cambiar a 'omit'
   });
 
   const text = await res.text();
@@ -135,8 +175,7 @@ function getPublicWishesFilter() {
   return {
     filter: {
       visibility: { _eq: 'public' },
-      // Si usas status publicados en Directus:
-      // status: { _eq: 'published' },
+      // status: { _eq: 'published' }, // si lo usás en tu esquema
     },
   };
 }
@@ -162,9 +201,5 @@ export const wishApi = {
   },
 };
 
-// =========================
-// Helper público
-// =========================
-export function getBaseUrl(): string {
-  return cleanDirectusUrl;
-}
+// Exposición opcional de la URL limpia (por si la querés mostrar en UI/monitor)
+export const DIRECTUS_URL = (() => getBaseUrl())();
