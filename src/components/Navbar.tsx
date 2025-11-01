@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 const NAV_ITEMS = [
   { to: '/discover', label: 'Descubrir' },
@@ -13,6 +14,7 @@ const MARQUEE_TEXT =
 
 const Navbar: React.FC = () => {
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <>
@@ -68,18 +70,40 @@ const Navbar: React.FC = () => {
 
             {/* CTAs */}
             <div className="hidden items-center gap-3 md:flex">
-              <Link
-                to="/login"
-                className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
-              >
-                Iniciar sesión
-              </Link>
-              <Link
-                to="/create-wish"
-                className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
-              >
-                Crear deseo
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-sm text-neutral-700">
+                    ¡Hola, {user.first_name || user.email}!
+                  </span>
+                  <button
+                    onClick={logout}
+                    className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+                  >
+                    Cerrar sesión
+                  </button>
+                  <Link
+                    to="/create-wish"
+                    className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
+                  >
+                    Crear deseo
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    className="rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+                  >
+                    Iniciar sesión
+                  </Link>
+                  <Link
+                    to="/create-wish"
+                    className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
+                  >
+                    Crear deseo
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile Hamburger */}
@@ -126,22 +150,46 @@ const Navbar: React.FC = () => {
                 >
                   Admin
                 </Link>
-                <div className="mt-2 flex items-center gap-2">
-                  <Link
-                    to="/login"
-                    className="flex-1 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 text-center hover:bg-neutral-50"
-                    onClick={() => setOpen(false)}
-                  >
-                    Iniciar sesión
-                  </Link>
-                  <Link
-                    to="/create-wish"
-                    className="flex-1 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white text-center hover:bg-neutral-800"
-                    onClick={() => setOpen(false)}
-                  >
-                    Crear deseo
-                  </Link>
-                </div>
+                {user ? (
+                  <div className="mt-2 flex flex-col gap-2">
+                    <div className="text-center text-sm text-neutral-700">
+                      ¡Hola, {user.first_name || user.email}!
+                    </div>
+                    <button
+                      onClick={() => {
+                        logout();
+                        setOpen(false);
+                      }}
+                      className="flex-1 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 text-center hover:bg-neutral-50"
+                    >
+                      Cerrar sesión
+                    </button>
+                    <Link
+                      to="/create-wish"
+                      className="flex-1 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white text-center hover:bg-neutral-800"
+                      onClick={() => setOpen(false)}
+                    >
+                      Crear deseo
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="mt-2 flex items-center gap-2">
+                    <Link
+                      to="/login"
+                      className="flex-1 rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-800 text-center hover:bg-neutral-50"
+                      onClick={() => setOpen(false)}
+                    >
+                      Iniciar sesión
+                    </Link>
+                    <Link
+                      to="/create-wish"
+                      className="flex-1 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white text-center hover:bg-neutral-800"
+                      onClick={() => setOpen(false)}
+                    >
+                      Crear deseo
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -150,11 +198,14 @@ const Navbar: React.FC = () => {
 
       {/* Styles locales para el marquee */}
       <style>{`
-        /* Marquee a 60fps usando transform + will-change */
+        /* Marquee optimizado a 60fps con transform + will-change */
         .marquee-track {
           display: inline-block;
           will-change: transform;
-          animation: marqueeSlide 30s linear infinite;
+          animation: marqueeSlide 20s linear infinite;
+          transform: translateZ(0);
+          backface-visibility: hidden;
+          perspective: 1000px;
         }
 
         /* Loop perfecto: repetimos el contenido y trasladamos -50% */

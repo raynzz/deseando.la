@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useInfiniteWishes } from '@/features/wishes/hooks';
 import type { Wish } from '@/features/wishes/types';
 import { getBaseUrl } from '@/lib/directus';
+import { useAuth } from '@/contexts/AuthContext';
 
 /* ---------------------------------- */
 /* Tipos y utilidades                  */
@@ -407,6 +408,7 @@ function DebugSidebar({
 /* ---------------------------------- */
 export default function Home() {
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   // Parámetros
   const pageSize = 12;
@@ -464,8 +466,7 @@ export default function Home() {
 
   // Al iniciar sesión
   const handleLoggedIn = (t: { access_token: string; refresh_token?: string }) => {
-    localStorage.setItem('directus_access_token', t.access_token);
-    if (t.refresh_token) localStorage.setItem('directus_refresh_token', t.refresh_token);
+    login(t);
     navigate('/admin'); // redirige al panel
   };
 
