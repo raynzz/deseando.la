@@ -57,6 +57,13 @@ const Navbar: React.FC = () => {
                   {item.label}
                 </Link>
               ))}
+              {/* Admin link opcional */}
+              <Link
+                to="/admin"
+                className="text-[15px] text-neutral-600 hover:text-neutral-900 transition-colors"
+              >
+                Admin
+              </Link>
             </div>
 
             {/* CTAs */}
@@ -68,7 +75,7 @@ const Navbar: React.FC = () => {
                 Iniciar sesión
               </Link>
               <Link
-                to="/register"
+                to="/create-wish"
                 className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 transition-colors"
               >
                 Crear deseo
@@ -112,6 +119,13 @@ const Navbar: React.FC = () => {
                     {item.label}
                   </Link>
                 ))}
+                <Link
+                  to="/admin"
+                  className="rounded-lg px-2 py-2 text-[15px] text-neutral-700 hover:bg-neutral-100"
+                  onClick={() => setOpen(false)}
+                >
+                  Admin
+                </Link>
                 <div className="mt-2 flex items-center gap-2">
                   <Link
                     to="/login"
@@ -121,7 +135,7 @@ const Navbar: React.FC = () => {
                     Iniciar sesión
                   </Link>
                   <Link
-                    to="/register"
+                    to="/create-wish"
                     className="flex-1 rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white text-center hover:bg-neutral-800"
                     onClick={() => setOpen(false)}
                   >
@@ -143,9 +157,7 @@ const Navbar: React.FC = () => {
           animation: marqueeSlide 30s linear infinite;
         }
 
-        /* Duplicado lógico del contenido: el contenedor real es más ancho que la pantalla
-           por los múltiples <span>. La animación traslada todo el track de 0% a -50% para
-           un bucle perfecto (porque repetimos el texto lo suficiente). */
+        /* Loop perfecto: repetimos el contenido y trasladamos -50% */
         @keyframes marqueeSlide {
           0%   { transform: translateX(0); }
           100% { transform: translateX(-50%); }
