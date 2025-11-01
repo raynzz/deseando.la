@@ -34,8 +34,15 @@ console.log('🔗 Configuración Directus:', {
   hasToken: Boolean(DIRECTUS_TOKEN),
 });
 
-// Exportar la URL para usarla en los componentes
-export { DIRECTUS_URL };
+// Verificar si la URL termina con /admin y quitarlo si es necesario
+let cleanDirectusUrl = DIRECTUS_URL;
+if (cleanDirectusUrl.endsWith('/admin')) {
+  cleanDirectusUrl = cleanDirectusUrl.slice(0, -6);
+  console.log('🔧 URL Directus corregida (quitando /admin):', cleanDirectusUrl);
+}
+
+// Exportar la URL limpia para usarla en los componentes
+export { DIRECTUS_URL: cleanDirectusUrl };
 
 // =========================
 // Utils
@@ -79,7 +86,7 @@ function toQuery(params?: Record<string, unknown>): string {
 }
 
 function absoluteUrl(path: string, params?: Record<string, unknown>): string {
-  const base = DIRECTUS_URL.replace(/\/+$/, '');
+  const base = cleanDirectusUrl.replace(/\/+$/, '');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${base}${cleanPath}${toQuery(params)}`;
 }
@@ -159,5 +166,5 @@ export const wishApi = {
 // Helper público
 // =========================
 export function getBaseUrl(): string {
-  return DIRECTUS_URL;
+  return cleanDirectusUrl;
 }
