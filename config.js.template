@@ -1,0 +1,5 @@
+// Runtime App Config (se completa en el arranque del contenedor)
+window.__APP_CONFIG__ = {
+  DIRECTUS_URL: "${DIRECTUS_URL}",
+  DIRECTUS_TOKEN: "${DIRECTUS_TOKEN}" // opcional; dejalo vacío si usás login
+};
