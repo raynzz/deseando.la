@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getBaseUrl } from '@/lib/directus';
+import { getBaseUrl, DIRECTUS_URL } from '@/lib/directus';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -19,6 +19,7 @@ const Register = () => {
   const [success, setSuccess] = useState(false);
 
   const baseUrl = getBaseUrl();
+  const directusUrl = DIRECTUS_URL;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -66,7 +67,7 @@ const Register = () => {
 
     try {
       // Primero intentamos crear el usuario en Directus
-      const userResponse = await fetch(`${baseUrl}/users`, {
+      const userResponse = await fetch(`${directusUrl}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +87,7 @@ const Register = () => {
       }
 
       // Si el usuario se crea correctamente, iniciamos sesión
-      const loginResponse = await fetch(`${baseUrl}/auth/login`, {
+      const loginResponse = await fetch(`${directusUrl}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

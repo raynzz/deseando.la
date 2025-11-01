@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getBaseUrl } from '@/lib/directus';
+import { getBaseUrl, DIRECTUS_URL } from '@/lib/directus';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ const Login = () => {
   const [error, setError] = useState<string | null>(null);
 
   const baseUrl = getBaseUrl();
+  const directusUrl = DIRECTUS_URL;
   const valid = /\S+@\S+\.\S+/.test(email) && password.trim().length >= 1;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,7 +22,9 @@ const Login = () => {
     setError(null);
 
     try {
-      const response = await fetch(`${baseUrl}/auth/login`, {
+      console.log('Intentando login con:', { email, baseUrl, directusUrl });
+      
+      const response = await fetch(`${directusUrl}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -29,12 +32,16 @@ const Login = () => {
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('Response status:', response.status);
+      
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!response.ok) {
-        const errorMessage = data?.errors?.[0]?.message || 
-                           data?.message || 
+        const errorMessage = data?.errors?.[0]?.message ||
+                           data?.message ||
                            `Error ${response.status}: ${response.statusText}`;
+        console.error('Login error:', errorMessage);
         throw new Error(errorMessage);
       }
 

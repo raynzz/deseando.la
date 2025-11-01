@@ -34,6 +34,9 @@ console.log('🔗 Configuración Directus:', {
   hasToken: Boolean(DIRECTUS_TOKEN),
 });
 
+// Exportar la URL para usarla en los componentes
+export { DIRECTUS_URL };
+
 // =========================
 // Utils
 // =========================
