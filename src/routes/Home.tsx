@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useInfiniteWishes } from '@/features/wishes/hooks';
 import type { Wish } from '@/features/wishes/types';
 import { getBaseUrl } from '@/lib/directus';
@@ -25,7 +25,138 @@ function truncate(s?: string | null, n = 120) {
 }
 
 /* ---------------------------------- */
-/* Modal de Registro                   */
+/* Modal de Login (Directus)           */
+/* ---------------------------------- */
+function LoginModal({
+  open,
+  onClose,
+  baseUrl,
+  onLoggedIn,
+}: {
+  open: boolean;
+  onClose: () => void;
+  baseUrl: string;
+  onLoggedIn: (tokens: { access_token: string; refresh_token?: string }) => void;
+}) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPass, setShowPass] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const valid = /\S+@\S+\.\S+/.test(email) && password.trim().length >= 1;
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!valid || loading) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await fetch(`${baseUrl.replace(/\/+$/, '')}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        const msg =
+          json?.errors?.[0]?.message ||
+          json?.message ||
+          `Error ${res.status}`;
+        throw new Error(msg);
+      }
+      const tokens = json?.data || json; // Directus normalmente retorna {data:{access_token,...}}
+      if (!tokens?.access_token) throw new Error('No token returned');
+      onLoggedIn(tokens);
+      onClose();
+      setEmail('');
+      setPassword('');
+    } catch (e: any) {
+      setErr(e?.message || 'Login error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Entrar</h3>
+          <button
+            onClick={onClose}
+            className="rounded-full p-2 hover:bg-black/5"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="mb-1 block text-sm font-medium">Email</label>
+            <input
+              type="email"
+              className="w-full rounded-lg border px-3 py-2 outline-none focus:ring"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Contraseña</label>
+            <div className="flex items-stretch">
+              <input
+                type={showPass ? 'text' : 'password'}
+                className="w-full rounded-l-lg border px-3 py-2 outline-none focus:ring"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass((v) => !v)}
+                className="rounded-r-lg border border-l-0 px-3 text-sm hover:bg-black/5"
+                aria-label="Mostrar u ocultar contraseña"
+              >
+                {showPass ? 'Ocultar' : 'Ver'}
+              </button>
+            </div>
+          </div>
+
+          {err && (
+            <div className="rounded border border-red-200 bg-red-50 p-2 text-sm text-red-700">
+              {err}
+            </div>
+          )}
+
+          <button
+            disabled={!valid || loading}
+            className={`w-full rounded-lg px-4 py-2 font-medium text-white ${
+              !valid || loading
+                ? 'cursor-not-allowed bg-neutral-400'
+                : 'bg-black hover:bg-neutral-800'
+            }`}
+          >
+            {loading ? 'Ingresando…' : 'Entrar'}
+          </button>
+
+          <p className="mt-2 text-center text-xs opacity-70">
+            ¿No tenés cuenta? Podés crearla desde la Home.
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- */
+/* Modal de Registro (placeholder)     */
 /* ---------------------------------- */
 function SignupModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [name, setName] = useState('');
@@ -36,10 +167,11 @@ function SignupModal({ open, onClose }: { open: boolean; onClose: () => void }) 
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Integración real pendiente (endpoint)
     console.log('📝 Registro:', { name, email, link });
     onClose();
-    setName(''); setEmail(''); setLink('');
+    setName('');
+    setEmail('');
+    setLink('');
   };
 
   if (!open) return null;
@@ -157,7 +289,7 @@ function UseCasesCarousel() {
 }
 
 /* ---------------------------------- */
-/* Sidebar de Monitor (ARREGLADO)     */
+/* Sidebar de Monitor                  */
 /* ---------------------------------- */
 function DebugSidebar({
   open,
@@ -196,7 +328,6 @@ function DebugSidebar({
 }) {
   return (
     <>
-      {/* Botón flotante para ABRIR */}
       <button
         onClick={onOpen}
         className={`fixed right-4 top-24 z-[55] rounded-full border bg-white px-3 py-1 text-sm shadow-sm hover:bg-black/5 md:right-6 ${open ? 'opacity-0 pointer-events-none' : ''}`}
@@ -204,7 +335,6 @@ function DebugSidebar({
         Monitor
       </button>
 
-      {/* Sidebar */}
       <aside
         className={`fixed right-0 top-0 z-[60] h-full w-full max-w-md transform bg-white shadow-xl transition-transform duration-300 md:rounded-l-2xl ${open ? 'translate-x-0' : 'translate-x-full'}`}
         aria-hidden={!open}
@@ -255,11 +385,15 @@ function DebugSidebar({
             {health.status === 'ok' && (
               <details className="mt-2">
                 <summary className="cursor-pointer">Ver respuesta</summary>
-                <pre className="mt-2 max-h-56 overflow-auto rounded bg-black/5 p-2 text-xs">{JSON.stringify((health as any).info, null, 2)}</pre>
+                <pre className="mt-2 max-h-56 overflow-auto rounded bg-black/5 p-2 text-xs">
+                  {JSON.stringify((health as any).info, null, 2)}
+                </pre>
               </details>
             )}
             {health.status === 'error' && (
-              <div className="mt-2 text-red-600"><span className="font-semibold">Error:</span> {(health as any).error}</div>
+              <div className="mt-2 text-red-600">
+                <span className="font-semibold">Error:</span> {(health as any).error}
+              </div>
             )}
           </div>
         </div>
@@ -272,6 +406,8 @@ function DebugSidebar({
 /* Página Home                         */
 /* ---------------------------------- */
 export default function Home() {
+  const navigate = useNavigate();
+
   // Parámetros
   const pageSize = 12;
   const sort = '-id';
@@ -290,7 +426,7 @@ export default function Home() {
   // Base URL
   const baseUrl: string = getBaseUrl();
 
-  // Endpoint 1ª página (para monitor)
+  // Endpoint 1ª página (monitor)
   const firstPageUrl = useMemo(() => {
     const qs = new URLSearchParams({
       sort,
@@ -323,18 +459,47 @@ export default function Home() {
 
   // UI state
   const [showSignup, setShowSignup] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
   const [showMonitor, setShowMonitor] = useState(false);
+
+  // Al iniciar sesión
+  const handleLoggedIn = (t: { access_token: string; refresh_token?: string }) => {
+    localStorage.setItem('directus_access_token', t.access_token);
+    if (t.refresh_token) localStorage.setItem('directus_refresh_token', t.refresh_token);
+    navigate('/admin'); // redirige al panel
+  };
 
   return (
     <main className="relative">
+      {/* Top bar simple */}
+      <div className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+          <Link to="/" className="font-semibold">Deseándola</Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowLogin(true)}
+              className="rounded-xl border px-3 py-1.5 text-sm hover:bg-black/5"
+            >
+              Entrar
+            </button>
+            <button
+              onClick={() => setShowSignup(true)}
+              className="rounded-xl bg-black px-3 py-1.5 text-sm font-medium text-white hover:bg-neutral-800"
+            >
+              Crear cuenta
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-4 pb-12 pt-10">
         <div className="rounded-3xl border bg-gradient-to-br from-white to-neutral-50 p-8 shadow-sm md:p-12">
           <div className="grid items-center gap-8 md:grid-cols-2">
             <div>
-              <h1 className="text-3xl font-semibold md:text-4xl">Deseándola</h1>
+              <h1 className="text-3xl font-semibold md:text-4xl">Compartí tu deseo y dejá que se cumpla</h1>
               <p className="mt-3 text-base opacity-80 md:text-lg">
-                Compartí tu deseo y dejá que se cumpla. Mostrá lo que querés lograr, activá tu red y conectá con quienes pueden ayudarte.
+                Mostrá lo que querés lograr, activá tu red y conectá con quienes pueden ayudarte.
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
                 <button onClick={() => setShowSignup(true)} className="rounded-xl bg-black px-5 py-2.5 text-sm font-medium text-white hover:bg-neutral-800">
@@ -443,8 +608,14 @@ export default function Home() {
         isFetching={isFetching}
       />
 
-      {/* Modal de registro */}
+      {/* Modales */}
       <SignupModal open={showSignup} onClose={() => setShowSignup(false)} />
+      <LoginModal
+        open={showLogin}
+        onClose={() => setShowLogin(false)}
+        baseUrl={baseUrl}
+        onLoggedIn={handleLoggedIn}
+      />
     </main>
   );
 }
