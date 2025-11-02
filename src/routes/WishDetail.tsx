@@ -316,7 +316,12 @@ export default function WishDetail() {
                 />
               </div>
             ) : (
-              <div className="aspect-[3/1] w-full bg-neutral-100" />
+              <div className="aspect-[3/1] w-full bg-gradient-to-br from-neutral-50 to-neutral-100 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-4xl mb-2">📷</div>
+                  <p className="text-sm opacity-60">Sin imagen de portada</p>
+                </div>
+              </div>
             )}
 
             <div className="grid gap-6 p-6 md:grid-cols-3">
@@ -332,7 +337,7 @@ export default function WishDetail() {
                 )}
               </div>
               <aside className="md:col-span-1">
-                <div className="rounded-xl border p-4 text-sm">
+                <div className="rounded-xl border p-4 text-sm bg-gradient-to-br from-white to-neutral-50">
                   <div className="font-medium">Datos</div>
                   <div className="mt-2 space-y-1 opacity-80">
                     <div>
@@ -371,13 +376,13 @@ export default function WishDetail() {
                 return (
                   <li
                     key={p.key}
-                    className="flex items-center gap-3 rounded-2xl border bg-white p-4 shadow-sm"
+                    className="flex items-center gap-3 rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
                   >
-                    <div className="h-12 w-12 overflow-hidden rounded-full bg-neutral-100">
+                    <div className="h-12 w-12 overflow-hidden rounded-full bg-gradient-to-br from-neutral-100 to-neutral-200">
                       {img ? (
                         <img src={img} alt={p.name} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xs opacity-50">
+                        <div className="flex h-full w-full items-center justify-center text-xs font-medium opacity-50">
                           {p.name[0]?.toUpperCase() || '—'}
                         </div>
                       )}
@@ -407,7 +412,10 @@ export default function WishDetail() {
             <h2 className="text-lg font-semibold">Regalos / Aportes</h2>
           </div>
           {gifts.length === 0 ? (
-            <p className="text-sm opacity-70">Aún no hay regalos para este deseo.</p>
+            <div className="rounded-2xl border bg-white p-8 text-center">
+              <div className="text-4xl mb-2">🎁</div>
+              <p className="text-sm opacity-70">Aún no hay regalos para este deseo.</p>
+            </div>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {gifts.map((g) => {
@@ -420,13 +428,13 @@ export default function WishDetail() {
                     ? avatarUrl(baseUrl, g.giver_user.avatar || undefined)
                     : null;
                 return (
-                  <li key={g.id} className="rounded-2xl border bg-white p-4 shadow-sm">
+                  <li key={g.id} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 overflow-hidden rounded-full bg-neutral-100">
+                      <div className="h-10 w-10 overflow-hidden rounded-full bg-gradient-to-br from-neutral-100 to-neutral-200">
                         {avatar ? (
                           <img src={avatar} alt={giver || ''} className="h-full w-full object-cover" />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-xs opacity-50">
+                          <div className="flex h-full w-full items-center justify-center text-xs font-medium opacity-50">
                             {giver?.[0]?.toUpperCase() || '—'}
                           </div>
                         )}
@@ -464,7 +472,10 @@ export default function WishDetail() {
         <section className="mx-auto mt-10 max-w-6xl px-4">
           <h2 className="mb-3 text-lg font-semibold">Actividad</h2>
           {events.length === 0 ? (
-            <p className="text-sm opacity-70">Sin actividad registrada.</p>
+            <div className="rounded-2xl border bg-white p-8 text-center">
+              <div className="text-4xl mb-2">📝</div>
+              <p className="text-sm opacity-70">Sin actividad registrada.</p>
+            </div>
           ) : (
             <ul className="space-y-3">
               {events.map((ev) => {
@@ -474,7 +485,7 @@ export default function WishDetail() {
                     : '';
                 const when = ev.date || ev.created_at;
                 return (
-                  <li key={ev.id} className="rounded-2xl border bg-white p-4 shadow-sm">
+                  <li key={ev.id} className="rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
                     <div className="text-sm">
                       <span className="font-medium">{ev.type || 'evento'}</span>{' '}
                       {who ? <span className="opacity-80">por {who}</span> : null}
