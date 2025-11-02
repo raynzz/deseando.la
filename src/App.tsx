@@ -8,6 +8,7 @@ import Admin from './routes/Admin'
 import Login from './routes/Login'
 import Register from './routes/Register'
 import Dashboard from './routes/Dashboard'
+import CreateWish from './routes/CreateWish'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/create-wish" element={<CreateWish />} />
           </Routes>
         </main>
         <Footer />
