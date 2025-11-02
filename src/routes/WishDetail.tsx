@@ -182,7 +182,6 @@ export default function WishDetail() {
           'visibility',
           'status',
           'cover_image',
-          'date_created',
           // owner expand
           'owner.id',
           'owner.first_name',
@@ -340,12 +339,6 @@ export default function WishDetail() {
                 <div className="rounded-xl border p-4 text-sm bg-gradient-to-br from-white to-neutral-50">
                   <div className="font-medium">Datos</div>
                   <div className="mt-2 space-y-1 opacity-80">
-                    <div>
-                      <span className="font-medium">Creado:</span>{' '}
-                      {wish.date_created
-                        ? new Date(wish.date_created).toLocaleString()
-                        : '—'}
-                    </div>
                     <div>
                       <span className="font-medium">Visibilidad:</span>{' '}
                       {wish.visibility || '—'}
