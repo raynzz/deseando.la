@@ -21,15 +21,17 @@ const Navbar: React.FC = () => {
       {/* ===== Top Marquee ===== */}
       <div className="relative overflow-hidden bg-black">
         <div className="py-4">
-          <div
-            className="marquee-track whitespace-nowrap text-sm text-white/90"
-            aria-label="Novedades del proyecto"
-          >
-            {/* Repetimos el contenido para el loop continuo */}
-            <span className="mx-8">{MARQUEE_TEXT}</span>
-            <span className="mx-8">{MARQUEE_TEXT}</span>
-            <span className="mx-8">{MARQUEE_TEXT}</span>
-            <span className="mx-8">{MARQUEE_TEXT}</span>
+          <div className="marquee-container">
+            <div
+              className="marquee-track whitespace-nowrap text-sm text-white/90"
+              aria-label="Novedades del proyecto"
+            >
+              {/* Repetimos el contenido para el loop continuo */}
+              <span className="mx-8">{MARQUEE_TEXT}</span>
+              <span className="mx-8">{MARQUEE_TEXT}</span>
+              <span className="mx-8">{MARQUEE_TEXT}</span>
+              <span className="mx-8">{MARQUEE_TEXT}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -191,6 +193,11 @@ const Navbar: React.FC = () => {
       {/* Styles locales para el marquee */}
       <style>{`
         /* Marquee optimizado a 60fps con transform + will-change */
+        .marquee-container {
+          overflow: hidden;
+          position: relative;
+        }
+        
         .marquee-track {
           display: inline-block;
           will-change: transform;

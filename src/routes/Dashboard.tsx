@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getBaseUrl } from '@/lib/directus';
+import { Link } from 'react-router-dom';
 
 // Tipos para los datos
 interface Wish {
@@ -230,7 +231,7 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Lista de deseos */}
+        {/* Lista de deseos con enlaces a detalles */}
         <div className="bg-white rounded-xl border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">Tus deseos</h3>
@@ -238,21 +239,47 @@ const Dashboard: React.FC = () => {
           <div className="divide-y divide-gray-200">
             {wishes.length > 0 ? (
               wishes.map((wish) => (
-                <div key={wish.id} className="px-6 py-4">
+                <div key={wish.id} className="px-6 py-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">{wish.title}</h4>
-                      <p className="text-sm text-gray-500 mt-1">{wish.description}</p>
-                    </div>
-                    <div className="text-right">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        wish.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        wish.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {wish.status.replace('_', ' ')}
-                      </span>
-                      <p className="text-xs text-gray-500 mt-1">{formatDate(wish.created_at)}</p>
+                    <Link 
+                      to={`/wish/${wish.id}`} 
+                      className="flex-1 min-w-0 group"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span className="text-blue-600">🎁</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-sm font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                            {wish.title}
+                          </h4>
+                          <p className="text-sm text-gray-500 truncate mt-1">
+                            {wish.description}
+                          </p>
+                          <div className="flex items-center space-x-4 mt-2">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              wish.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              wish.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {wish.status.replace('_', ' ')}
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {formatDate(wish.created_at)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                    <div className="flex items-center space-x-2">
+                      <Link
+                        to={`/wish/${wish.id}`}
+                        className="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                      >
+                        Ver detalles
+                      </Link>
                     </div>
                   </div>
                 </div>
@@ -261,9 +288,12 @@ const Dashboard: React.FC = () => {
               <div className="px-6 py-8 text-center">
                 <div className="text-gray-400 mb-2">📋</div>
                 <p className="text-gray-500">No tienes deseos creados aún</p>
-                <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                <Link 
+                  to="/create-wish"
+                  className="mt-4 inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
                   Crear primer deseo
-                </button>
+                </Link>
               </div>
             )}
           </div>

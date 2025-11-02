@@ -215,17 +215,17 @@ function BentoSection() {
         <p className="text-sm opacity-80">Elegí caminos para sumar impulso.</p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
-        <div className="rounded-2xl border p-5 shadow-sm">
+        <div className="rounded-2xl border p-5 shadow-sm" style={{ backgroundColor: '#FAF7B9' }}>
           <h3 className="text-lg font-medium">Sumate y ofrecé tu talento</h3>
           <p className="mt-2 text-sm opacity-80">Conectá con quienes necesitan lo que hacés.</p>
           <button className="mt-3 rounded-lg border px-3 py-1 text-sm hover:bg-black/5">Empezar</button>
         </div>
-        <div className="rounded-2xl border p-5 shadow-sm">
+        <div className="rounded-2xl border p-5 shadow-sm" style={{ backgroundColor: '#FAF7B9' }}>
           <h3 className="text-lg font-medium">Mové tu red</h3>
           <p className="mt-2 text-sm opacity-80">Compartí y activá apoyo de tus contactos.</p>
           <button className="mt-3 rounded-lg border px-3 py-1 text-sm hover:bg-black/5">Compartir</button>
         </div>
-        <div className="rounded-2xl border p-5 shadow-sm">
+        <div className="rounded-2xl border p-5 shadow-sm" style={{ backgroundColor: '#FAF7B9' }}>
           <h3 className="text-lg font-medium">Unite a la comunidad</h3>
           <p className="mt-2 text-sm opacity-80">Historias, consejos y oportunidades.</p>
           <button className="mt-3 rounded-lg border px-3 py-1 text-sm hover:bg-black/5">Ver más</button>
@@ -270,7 +270,7 @@ function UseCasesCarousel() {
                style={{ transform: `translateX(-${index * 100}%)`, width: `${USE_CASES.length * 100}%` }}>
             {USE_CASES.map((c, i) => (
               <div key={i} className="w-full shrink-0 p-6 md:p-8" style={{ width: `${100 / USE_CASES.length}%` }}>
-                <div className="mx-auto max-w-3xl rounded-xl border p-6 shadow-sm">
+                <div className="mx-auto max-w-3xl rounded-xl border p-6 shadow-sm" style={{ backgroundColor: '#FAF7B9' }}>
                   <div className="text-4xl">{c.emoji}</div>
                   <h3 className="mt-2 text-lg font-semibold">{c.title}</h3>
                   <p className="mt-1 text-sm opacity-80">{c.desc}</p>
@@ -474,7 +474,7 @@ export default function Home() {
     <main className="relative">
       {/* Hero */}
       <section className="mx-auto max-w-5xl px-4 pb-12 pt-10">
-        <div className="rounded-3xl border bg-gradient-to-br from-white to-neutral-50 p-8 shadow-sm md:p-12">
+        <div className="rounded-3xl border p-8 shadow-sm md:p-12" style={{ backgroundColor: '#FAF7B9' }}>
           <div className="grid items-center gap-8 md:grid-cols-2">
             <div>
               <h1 className="text-3xl font-semibold md:text-4xl">Compartí tu deseo y dejá que se cumpla</h1>

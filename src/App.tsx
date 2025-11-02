@@ -13,7 +13,7 @@ import CreateWish from './routes/CreateWish'
 function App() {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-bg text-text flex flex-col">
+      <div className="min-h-screen bg-white flex flex-col">
         <Navbar />
         <main className="flex-grow container mx-auto px-4 py-8">
           <Routes>
