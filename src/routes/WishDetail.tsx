@@ -6,7 +6,7 @@ import { getBaseUrl } from '@/lib/directus';
  *  Config básica / Helpers
  *  ========================== */
 const TOKEN_KEY = 'directus_access_token';
-const USE_COOKIE_MODE = false; // cambia a true si usas auth por cookies
+const USE_COOKIE_MODE = true; // forzamos el modo de cookies
 
 type UserLite = {
   id: string;
@@ -51,8 +51,22 @@ function apiHeaders(): Record<string, string> {
   const h: Record<string, string> = {};
   if (!USE_COOKIE_MODE) {
     const t = localStorage.getItem(TOKEN_KEY);
-    if (t) h['Authorization'] = `Bearer ${t}`;
+    console.log('Token from localStorage:', t ? 'Present' : 'Not found');
+    if (t) {
+      h['Authorization'] = `Bearer ${t}`;
+      console.log('Authorization header set');
+    } else {
+      // Intentar obtener el token de otra ubicación
+      const tokenFromUrl = new URLSearchParams(window.location.search).get('token');
+      if (tokenFromUrl) {
+        h['Authorization'] = `Bearer ${tokenFromUrl}`;
+        console.log('Authorization header set from URL');
+      }
+    }
   }
+  // Añadir headers para depuración
+  h['Content-Type'] = 'application/json';
+  h['Accept'] = 'application/json';
   return h;
 }
 
@@ -70,6 +84,12 @@ async function apiFetch<T = any>(
 
   if (!res.ok) {
     const txt = await res.text();
+    console.error('API Error:', {
+      status: res.status,
+      statusText: res.statusText,
+      headers: res.headers,
+      body: txt
+    });
     try {
       const j = txt ? JSON.parse(txt) : {};
       const msg = j?.errors?.[0]?.message || j?.message || `HTTP ${res.status}`;
@@ -157,6 +177,12 @@ export default function WishDetail() {
 
   useEffect(() => {
     let mounted = true;
+
+    // Verificar estado de autenticación
+    const token = localStorage.getItem(TOKEN_KEY);
+    console.log('Current token:', token ? 'Present' : 'Not found');
+    console.log('Cookie mode:', USE_COOKIE_MODE);
+    console.log('All cookies:', document.cookie);
 
     async function run() {
       setLoading(true);
