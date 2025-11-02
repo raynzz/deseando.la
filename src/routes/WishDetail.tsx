@@ -31,11 +31,7 @@ type Wish = {
 type Gift = {
   id: number;
   wish?: number | null;
-  amount?: number | null;
-  message?: string | null;
-  created_at?: string | null;
-  giver_name?: string | null; // si tu esquema guarda nombre libre
-  giver_user?: UserLite | string | null; // si guarda relación con users
+  giver_user?: UserLite | string | null; // relación con users
 };
 
 type Event = {
@@ -153,14 +149,6 @@ export default function WishDetail() {
             type: 'giver',
           });
         }
-      } else if (g.giver_name) {
-        const key = `giver_name:${g.id}`;
-        list.push({
-          key,
-          name: g.giver_name,
-          avatar: null,
-          type: 'giver',
-        });
       }
     });
 
@@ -206,10 +194,6 @@ export default function WishDetail() {
         const giftFields = [
           'id',
           'wish',
-          'amount',
-          'message',
-          'created_at',
-          'giver_name',
           // relación a users si existe
           'giver_user.id',
           'giver_user.first_name',
@@ -415,7 +399,7 @@ export default function WishDetail() {
                 const giver =
                   g.giver_user && typeof g.giver_user !== 'string'
                     ? fullName(g.giver_user) || g.giver_user.email
-                    : g.giver_name || 'Anónimo';
+                    : 'Anónimo';
                 const avatar =
                   g.giver_user && typeof g.giver_user !== 'string'
                     ? avatarUrl(baseUrl, g.giver_user.avatar || undefined)
@@ -435,23 +419,10 @@ export default function WishDetail() {
                       <div className="min-w-0">
                         <div className="truncate text-sm font-medium">{giver}</div>
                         <div className="text-xs opacity-60">
-                          {g.created_at ? new Date(g.created_at).toLocaleString() : '—'}
+                          Sin fecha disponible
                         </div>
                       </div>
                     </div>
-                    {g.amount != null && (
-                      <div className="mt-3 text-sm">
-                        <span className="opacity-70">Monto:</span>{' '}
-                        <span className="font-medium">
-                          {new Intl.NumberFormat().format(g.amount)}
-                        </span>
-                      </div>
-                    )}
-                    {g.message && (
-                      <p className="mt-2 whitespace-pre-wrap text-sm opacity-90">
-                        {g.message}
-                      </p>
-                    )}
                   </li>
                 );
               })}
