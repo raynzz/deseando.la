@@ -279,7 +279,7 @@ export default function WishDetail() {
     <main className="pb-24">
       {/* Topbar */}
       <div className="sticky top-0 z-40 border-b bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-1560px items-center justify-between px-4 py-3">
           <Link to="/" className="font-semibold">Deseándola</Link>
           <Link
             to="/admin"
@@ -291,7 +291,7 @@ export default function WishDetail() {
       </div>
 
       {/* Hero */}
-      <section className="mx-auto max-w-6xl px-4 pt-6">
+      <section className="mx-auto max-w-1560px px-4 pt-6">
         {loading && (
           <div className="rounded-2xl border bg-white p-6 text-sm opacity-70">
             Cargando…
@@ -358,7 +358,7 @@ export default function WishDetail() {
 
       {/* Personas relacionadas */}
       {wish && !loading && !err && (
-        <section className="mx-auto mt-8 max-w-6xl px-4">
+        <section className="mx-auto mt-8 max-w-1560px px-4">
           <h2 className="mb-3 text-lg font-semibold">Personas relacionadas</h2>
           {people.length === 0 ? (
             <p className="text-sm opacity-70">No hay personas asociadas todavía.</p>
@@ -400,7 +400,7 @@ export default function WishDetail() {
 
       {/* Regalos */}
       {wish && !loading && !err && (
-        <section className="mx-auto mt-10 max-w-6xl px-4">
+        <section className="mx-auto mt-10 max-w-1560px px-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-semibold">Regalos / Aportes</h2>
           </div>
@@ -462,7 +462,7 @@ export default function WishDetail() {
 
       {/* Eventos / Timeline */}
       {wish && !loading && !err && (
-        <section className="mx-auto mt-10 max-w-6xl px-4">
+        <section className="mx-auto mt-10 max-w-1560px px-4">
           <h2 className="mb-3 text-lg font-semibold">Actividad</h2>
           {events.length === 0 ? (
             <div className="rounded-2xl border bg-white p-8 text-center">

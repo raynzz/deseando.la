@@ -4,6 +4,7 @@ import { useInfiniteWishes } from '@/features/wishes/hooks';
 import type { Wish } from '@/features/wishes/types';
 import { getBaseUrl } from '@/lib/directus';
 import { useAuth } from '@/contexts/AuthContext';
+import Footer from '@/components/Footer';
 
 /* ---------------------------------- */
 /* Tipos y utilidades                  */
@@ -209,7 +210,7 @@ function SignupModal({ open, onClose }: { open: boolean; onClose: () => void }) 
 /* ---------------------------------- */
 function BentoSection() {
   return (
-    <section className="mx-auto max-w-5xl px-4">
+    <section className="mx-auto max-w-1560px px-4">
       <div className="mb-6">
         <h2 className="text-xl font-semibold">Potenciá tu deseo</h2>
         <p className="text-sm opacity-80">Elegí caminos para sumar impulso.</p>
@@ -236,7 +237,7 @@ function BentoSection() {
 }
 
 /* ---------------------------------- */
-/* Carrusel de Casos de Uso            */
+/* Casos de Uso en Cards               */
 /* ---------------------------------- */
 type UseCase = { title: string; desc: string; emoji: string };
 const USE_CASES: UseCase[] = [
@@ -247,43 +248,20 @@ const USE_CASES: UseCase[] = [
   { title: 'Equipar tu hogar', desc: 'Definí prioridades y avanzá.', emoji: '🏠' },
 ];
 
-function UseCasesCarousel() {
-  const [index, setIndex] = useState(0);
-  const prev = () => setIndex(i => (i === 0 ? USE_CASES.length - 1 : i - 1));
-  const next = () => setIndex(i => (i === USE_CASES.length - 1 ? 0 : i + 1));
-
+function UseCasesCards() {
   return (
-    <section className="mx-auto max-w-5xl px-4">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">¿Para qué podés usarlo?</h2>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={prev} className="rounded-lg border px-3 py-1 text-sm hover:bg-black/5" aria-label="Anterior">‹</button>
-          <button onClick={next} className="rounded-lg border px-3 py-1 text-sm hover:bg-black/5" aria-label="Siguiente">›</button>
-        </div>
+    <section className="mx-auto max-w-1560px px-4">
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold">¿Para qué podés usarlo?</h2>
       </div>
-
-      <div className="relative">
-        <div className="overflow-hidden rounded-2xl border bg-white">
-          <div className="flex transition-transform duration-300"
-               style={{ transform: `translateX(-${index * 100}%)`, width: `${USE_CASES.length * 100}%` }}>
-            {USE_CASES.map((c, i) => (
-              <div key={i} className="w-full shrink-0 p-6 md:p-8" style={{ width: `${100 / USE_CASES.length}%` }}>
-                <div className="mx-auto max-w-3xl rounded-xl border p-6 shadow-sm bg-white">
-                  <div className="text-4xl">{c.emoji}</div>
-                  <h3 className="mt-2 text-lg font-semibold">{c.title}</h3>
-                  <p className="mt-1 text-sm opacity-80">{c.desc}</p>
-                </div>
-              </div>
-            ))}
+      <div className="grid gap-4 md:grid-cols-3">
+        {USE_CASES.map((c, i) => (
+          <div key={i} className="rounded-2xl border p-6 shadow-sm bg-white">
+            <div className="text-4xl">{c.emoji}</div>
+            <h3 className="mt-2 text-lg font-semibold">{c.title}</h3>
+            <p className="mt-1 text-sm opacity-80">{c.desc}</p>
           </div>
-        </div>
-        <div className="mt-3 flex justify-center gap-2">
-          {USE_CASES.map((_, i) => (
-            <button key={i} onClick={() => setIndex(i)} className={`h-2 w-2 rounded-full ${i === index ? 'bg-black' : 'bg-black/20'}`} aria-label={`Ir a ${i + 1}`} />
-          ))}
-        </div>
+        ))}
       </div>
     </section>
   );
@@ -473,7 +451,7 @@ export default function Home() {
   return (
     <main className="relative">
       {/* Hero */}
-      <section className="mx-auto max-w-5xl px-4 pb-12 pt-10">
+      <section className="mx-auto max-w-1560px px-4 pb-12 pt-10">
         <div className="rounded-3xl border bg-gradient-to-br from-white to-neutral-50 p-8 shadow-sm md:p-12">
           <div className="grid items-center gap-8 md:grid-cols-2">
             <div>
@@ -504,7 +482,7 @@ export default function Home() {
       </section>
 
       {/* Listado de deseos: Cards con imagen */}
-      <section className="mx-auto max-w-5xl space-y-3 px-4">
+      <section className="mx-auto max-w-1560px space-y-3 px-4">
         <h2 className="text-lg font-semibold">Últimos deseos</h2>
 
         {isLoading && <p className="opacity-70">Cargando…</p>}
@@ -564,9 +542,9 @@ export default function Home() {
         )}
       </section>
 
-      {/* Bento + Carrusel */}
+      {/* Bento + Cards */}
       <div className="mt-14"><BentoSection /></div>
-      <div className="mt-14 mb-24"><UseCasesCarousel /></div>
+      <div className="mt-14 mb-24"><UseCasesCards /></div>
 
       {/* Sidebar Monitor */}
       <DebugSidebar
@@ -596,6 +574,9 @@ export default function Home() {
         baseUrl={baseUrl}
         onLoggedIn={handleLoggedIn}
       />
+
+      {/* Footer */}
+      <Footer />
     </main>
   );
 }

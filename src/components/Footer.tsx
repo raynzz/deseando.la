@@ -22,7 +22,7 @@ const Footer = () => {
 
   return (
     <footer className="bg-white border-t border-line mt-12 py-6">
-      <div className="container mx-auto px-4">
+      <div className="mx-auto max-w-1560px px-4">
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted">
           <div className="mb-2 md:mb-0">
             <span className="font-medium">Deseandola</span> - Plataforma de Deseos
