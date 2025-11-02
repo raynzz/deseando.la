@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getBaseUrl } from '@/lib/directus';
+import { useNavigate } from 'react-router-dom';
 
 type User = {
   id: string;
@@ -24,6 +25,7 @@ const REFRESH_KEY = 'directus_refresh_token';
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check if user is logged in on mount
@@ -70,12 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(REFRESH_KEY, tokens.refresh_token);
     }
     fetchUser();
+    
+    // Redirigir al admin después del login
+    navigate('/admin');
   };
 
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_KEY);
     setUser(null);
+    navigate('/');
   };
 
   const value = {

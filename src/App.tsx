@@ -5,6 +5,9 @@ import Footer from './components/Footer'
 import Home from './routes/Home'
 import WishDetail from './routes/WishDetail'
 import Admin from './routes/Admin'
+import Login from './routes/Login'
+import Register from './routes/Register'
+import Dashboard from './routes/Dashboard'
 
 function App() {
   return (
@@ -15,7 +18,10 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/wish/:id" element={<WishDetail />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
           </Routes>
         </main>
         <Footer />
