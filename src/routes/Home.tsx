@@ -469,14 +469,6 @@ export default function Home() {
               </div>
               <p className="mt-2 text-xs opacity-70">Gratis. Sin tarjetas. Empezá en minutos.</p>
             </div>
-            <div className="rounded-2xl border p-6 text-sm opacity-80">
-              <p>Subí la información de tu deseo, sumá apoyo y seguí el avance paso a paso. Todo en un mismo lugar.</p>
-              <ul className="mt-3 list-disc space-y-1 pl-5">
-                <li>Listas organizadas y fáciles de compartir</li>
-                <li>Conectá con aportes y colaboradores</li>
-                <li>Visibilidad pública o privada</li>
-              </ul>
-            </div>
           </div>
         </div>
       </section>
